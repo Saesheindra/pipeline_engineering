@@ -1,0 +1,8 @@
+{
+  "name": "pipeline-engineering-calculator",
+  "version": "1.0.0",
+  "description": "Pipeline Engineering Calculator - Educational Tool",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}
