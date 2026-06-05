@@ -645,13 +645,14 @@ select.input { cursor: pointer; }
                 <div id="wt-inputs">
                     <div class="grid-3">
                         <div class="card">
-                            <div class="card-header"><div class="card-title">Design Code</div></div>
+                            <div class="card-header"><div class="card-title">Design Code & Material</div></div>
                             <div class="card-body">
                                 <div class="form-group">
-                                    <label class="form-label">Standard</label>
+                                    <label class="form-label">Design Standard</label>
                                     <select class="input" id="wt_code">
                                         <option value="1">ASME B31.8 + API 1111 (Gas)</option>
                                         <option value="2">ASME B31.4 + API 1111 (Liquid)</option>
+                                        <option value="3">DNV-ST-F101 (LRFD Method)</option>
                                     </select>
                                 </div>
                                 <div class="form-row">
@@ -687,6 +688,42 @@ select.input { cursor: pointer; }
                                             <input type="number" class="input" id="wt_smys" value="290" readonly>
                                             <span class="input-suffix">MPa</span>
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Weld Type</label>
+                                        <select class="input" id="wt_weld">
+                                            <option value="1.0">Seamless (1.0)</option>
+                                            <option value="1.0" selected>SAWL/DSAW (1.0)</option>
+                                            <option value="0.95">HFW/ERW (0.95)</option>
+                                            <option value="0.85">EFW (0.85)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Safety Class</label>
+                                        <select class="input" id="wt_sc">
+                                            <option value="1">Low (γSC=1.046)</option>
+                                            <option value="2" selected>Medium (γSC=1.138)</option>
+                                            <option value="3">High (γSC=1.308)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Mill Tolerance</label>
+                                        <select class="input" id="wt_tol">
+                                            <option value="0.125" selected>12.5% (API 5L)</option>
+                                            <option value="0.10">10% (Enhanced)</option>
+                                            <option value="0.05">5% (Tight)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Sour Service</label>
+                                        <select class="input" id="wt_sour">
+                                            <option value="0" selected>No (Standard)</option>
+                                            <option value="1">Yes (NACE MR0175)</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -1265,15 +1302,56 @@ function updateOD(){document.getElementById('wt_od').value=npsOD[document.getEle
 function updateGrade(){document.getElementById('wt_smys').value=grades[document.getElementById('wt_grade').value].s;}
 function syncSlider(id){const v=document.getElementById(id+'_slider').value;document.getElementById(id).value=v;document.getElementById(id+'_val').textContent=v+(id.includes('_p')?id==='wt_p'?' MPa':' MPa':id.includes('_t')?' C':' m');}
 
-// Wall Thickness
+// Wall Thickness - Enhanced with DNV LRFD, Sour Service, Multiple Codes
 function calcWT(){
     const code=+document.getElementById('wt_code').value,OD=+document.getElementById('wt_od').value,SMYS=+document.getElementById('wt_smys').value,grade=+document.getElementById('wt_grade').value;
     const P=+document.getElementById('wt_p').value,T=+document.getElementById('wt_t').value,CA=+document.getElementById('wt_ca').value;
     const wd=+document.getElementById('wt_wd').value,bs=+document.getElementById('wt_bs').value,len=+document.getElementById('wt_len').value;
-    const f1=0.72,fE=0.9,fc=0.75,fp=0.8,fd=code==1?0.5:0.6,fT=T>204?0.867:T>177?0.9:T>149?0.933:T>121?0.967:1;
+    const fWeld=+document.getElementById('wt_weld').value,scClass=+document.getElementById('wt_sc').value;
+    const millTol=+document.getElementById('wt_tol').value,sourService=+document.getElementById('wt_sour').value;
+
+    // Design factors
+    const f1=0.72,fE=fWeld,fc=0.75,fp=0.8;
+    const fd=code==1?0.5:code==2?0.6:0.72; // ASME gas, ASME liquid, DNV
+    const fT=T>204?0.867:T>177?0.9:T>149?0.933:T>121?0.967:1;
+
+    // DNV-ST-F101 LRFD factors
+    const gammaM=1.15,alphaU=0.96; // Material factors
+    const gammaSC=[1.046,1.138,1.308][scClass-1]; // Safety class factor
+    const gammaF=1.1; // Load factor
+
     const Pext=1025*9.81*(wd+bs)/1e6,SMTS=grades[grade].t,Seff=Math.min(SMYS,SMTS/1.15);
-    const t1=P*OD/(2*SMYS*f1*fE*fT)+CA,t2=1.1*P*OD/(2*SMYS*f1*fE*fT)+CA,t3=(P-Pext)*OD/(2*0.9*Seff*fd)+CA,t4=(1.1*P-Pext)*OD/(2*0.9*Seff*fd)+CA;
-    const thoop=Math.max(t1,t2,t3,t4),tbuck=OD*Math.pow(Pext/(fp*24*SMYS),1/2.4)+CA,tmin=Math.max(thoop,tbuck),tsel=Math.ceil(tmin*10)/10;
+
+    let t1,t2,t3,t4,thoop,tbuck,tmin,tsel;
+
+    if(code===3){
+        // DNV-ST-F101 LRFD Method
+        const Pld=P*gammaF; // Load-factored pressure
+        const t_dnv=(Pld*OD)/(2*SMYS*alphaU/(gammaM*gammaSC))+CA;
+        const t_dnv_fab=t_dnv/(1-millTol); // Account for mill tolerance
+        t1=t_dnv;t2=t_dnv_fab;
+        t3=(Pld-Pext)*OD/(2*SMTS*alphaU/(gammaM*gammaSC)*0.87)+CA;
+        t4=t3/(1-millTol);
+        thoop=Math.max(t1,t2,t3,t4);
+    } else {
+        // ASME B31.8/B31.4 + API 1111
+        t1=P*OD/(2*SMYS*f1*fE*fT)+CA;
+        t2=1.1*P*OD/(2*SMYS*f1*fE*fT)+CA;
+        t3=(P-Pext)*OD/(2*0.9*Seff*fd)+CA;
+        t4=(1.1*P-Pext)*OD/(2*0.9*Seff*fd)+CA;
+        thoop=Math.max(t1,t2,t3,t4);
+    }
+
+    tbuck=OD*Math.pow(Pext/(fp*24*SMYS),1/2.4)+CA;
+    tmin=Math.max(thoop,tbuck);
+
+    // Sour service check - NACE MR0175 limits max hardness
+    if(sourService===1 && grade>6){
+        // X65+ not recommended for sour without special requirements
+        tmin=tmin*1.1; // Add 10% margin for sour service
+    }
+
+    tsel=Math.ceil(tmin*10)/10;
 
     document.getElementById('r_t1').textContent=t1.toFixed(2);document.getElementById('r_t2').textContent=t2.toFixed(2);
     document.getElementById('r_t3').textContent=t3.toFixed(2);document.getElementById('r_t4').textContent=t4.toFixed(2);
