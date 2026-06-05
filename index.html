@@ -1,515 +1,1273 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pipeline Engineering Calculator</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.63.1/build/stlite.css">
+    <title>Pipeline Engineering Suite | DNV | ASME | API</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-        }
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1E3A5F 0%, #2E5077 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-        }
-        #loading h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        #loading p {
-            font-size: 1.2rem;
-            opacity: 0.8;
-        }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        #root {
-            height: 100vh;
-        }
+:root {
+    --bg-primary: #0a0f1a;
+    --bg-secondary: #0f172a;
+    --bg-tertiary: #1e293b;
+    --bg-elevated: #273449;
+    --border-subtle: #334155;
+    --border-default: #475569;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-primary: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-muted: #1e40af;
+    --success: #10b981;
+    --success-bg: rgba(16,185,129,0.1);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245,158,11,0.1);
+    --error: #ef4444;
+    --error-bg: rgba(239,68,68,0.1);
+    --chart-1: #3b82f6;
+    --chart-2: #10b981;
+    --chart-3: #8b5cf6;
+    --chart-4: #f59e0b;
+    --chart-5: #ec4899;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+/* Layout */
+.app { display: flex; height: 100vh; overflow: hidden; }
+.sidebar {
+    width: 64px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.2s ease;
+    z-index: 100;
+}
+.sidebar:hover { width: 220px; }
+.sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 64px;
+}
+.logo {
+    width: 32px;
+    height: 32px;
+    background: var(--accent-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.logo-text {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.sidebar:hover .logo-text { opacity: 1; }
+
+.nav-section { padding: 12px 8px; flex: 1; overflow-y: auto; }
+.nav-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 8px 12px 4px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.sidebar:hover .nav-label { opacity: 1; }
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    margin-bottom: 2px;
+    position: relative;
+}
+.nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.nav-item.active {
+    background: var(--accent-muted);
+    color: var(--accent-primary);
+}
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 20px;
+    background: var(--accent-primary);
+    border-radius: 0 2px 2px 0;
+}
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.nav-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.nav-text {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.sidebar:hover .nav-text { opacity: 1; }
+
+/* Main Content */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.header {
+    height: 64px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+}
+.header-title { font-size: 15px; font-weight: 600; }
+.header-subtitle { font-size: 12px; color: var(--text-muted); }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+}
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+.btn-ghost:hover { background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border-default); }
+.btn-primary { background: var(--accent-primary); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn svg { width: 16px; height: 16px; }
+
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* Dashboard */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.kpi-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.kpi-card:hover {
+    border-color: var(--border-default);
+    transform: translateY(-2px);
+}
+.kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.kpi-icon svg { width: 20px; height: 20px; }
+.kpi-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.kpi-status.pass { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.kpi-status.fail { background: var(--error); box-shadow: 0 0 8px var(--error); }
+.kpi-status.pending { background: var(--text-muted); }
+.kpi-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.kpi-value { font-size: 24px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+.kpi-unit { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+.kpi-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+/* Cards */
+.card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.card-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.card-title svg { width: 16px; height: 16px; color: var(--text-muted); }
+.card-body { padding: 20px; }
+.card-footer { padding: 16px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-tertiary); }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+@media (max-width: 1200px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+/* Forms */
+.form-group { margin-bottom: 16px; }
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+
+.input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.15s;
+}
+.input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.input:read-only { color: var(--text-muted); background: var(--bg-secondary); }
+
+.input-group { display: flex; }
+.input-group .input { border-radius: 6px 0 0 6px; }
+.input-suffix {
+    padding: 10px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 50px;
+    text-align: center;
+}
+
+select.input { cursor: pointer; }
+
+/* Tables */
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-tertiary);
+}
+.table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: 'JetBrains Mono', monospace;
+}
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--bg-tertiary); }
+.table .value { font-weight: 600; color: var(--accent-primary); }
+.table .pass { color: var(--success); }
+.table .fail { color: var(--error); }
+
+.result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); }
+.result-row:last-child { border-bottom: none; }
+.result-label { color: var(--text-secondary); font-size: 13px; }
+.result-value { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+.result-highlight { background: var(--bg-tertiary); margin: 0 -20px; padding: 12px 20px; }
+
+/* Status Badge */
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.status.pass { background: var(--success-bg); color: var(--success); }
+.status.fail { background: var(--error-bg); color: var(--error); }
+.status.warn { background: var(--warning-bg); color: var(--warning); }
+.status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; padding: 4px; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 20px; }
+.tab {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+}
+.tab:hover { color: var(--text-secondary); }
+.tab.active { background: var(--bg-secondary); color: var(--text-primary); }
+
+/* Slider */
+.slider-wrap { display: flex; align-items: center; gap: 12px; }
+.slider {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bg-elevated);
+    cursor: pointer;
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+.slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.slider-value {
+    min-width: 80px;
+    padding: 6px 10px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+}
+
+/* Charts */
+.chart-container { height: 300px; }
+
+/* Panels */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Section */
+.section { margin-bottom: 24px; }
+.section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle); }
+
+/* Utility */
+.text-mono { font-family: 'JetBrains Mono', monospace; }
+.text-muted { color: var(--text-muted); }
+.text-sm { font-size: 12px; }
+.mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+.gap-4 { gap: 16px; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+
+/* Formula */
+.formula {
+    background: var(--bg-tertiary);
+    border-left: 3px solid var(--accent-primary);
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+}
+
+/* Progress */
+.progress-bar {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+/* Animation */
+.animate-in { animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-default); }
     </style>
 </head>
 <body>
-    <div id="loading">
-        <h1>Pipeline Engineering Calculator</h1>
-        <div class="spinner"></div>
-        <p>Loading application... (first load may take 30-60 seconds)</p>
-        <p style="font-size: 0.9rem; margin-top: 20px;">DNV, ASME & API Standards</p>
-    </div>
-    <div id="root"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.63.1/build/stlite.js"></script>
-    <script>
-        stlite.mount({
-            requirements: ["numpy", "plotly"],
-            entrypoint: "app.py",
-            files: {
-"app.py": `
-import streamlit as st
-import numpy as np
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import math
-
-# Page config
-st.set_page_config(page_title="Pipeline Engineering Calculator", page_icon="🔧", layout="wide")
-
-# Custom CSS
-st.markdown("""
-<style>
-    .main-header {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #1E3A5F;
-        text-align: center;
-        padding: 1rem;
-        background: linear-gradient(90deg, #E8F4F8 0%, #D1E9F0 100%);
-        border-radius: 10px;
-        margin-bottom: 1rem;
-    }
-    .result-pass { background: #d4edda; color: #155724; padding: 0.5rem; border-radius: 5px; }
-    .result-fail { background: #f8d7da; color: #721c24; padding: 0.5rem; border-radius: 5px; }
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown('<div class="main-header">Pipeline Engineering Calculator</div>', unsafe_allow_html=True)
-st.markdown("**Educational Tool** | DNV, ASME & API Standards | Formula Explanations")
-
-# Material grades
-GRADES = {'Gr.B': (245, 415), 'X42': (290, 415), 'X46': (320, 435), 'X52': (360, 460),
-          'X56': (390, 490), 'X60': (415, 520), 'X65': (450, 535), 'X70': (485, 570)}
-
-NPS_OD = {4: 114.3, 6: 168.3, 8: 219.1, 10: 273.1, 12: 323.9, 14: 355.6, 16: 406.4,
-          18: 457.2, 20: 508.0, 24: 609.6, 30: 762.0, 36: 914.4}
-
-# Sidebar navigation
-calc_type = st.sidebar.radio("Select Calculator", [
-    "Wall Thickness (ASME/API)",
-    "Free Span (DNV-RP-F105)",
-    "CP Anode (DNV-RP-F103)",
-    "Corrosion Assessment (DNV-RP-F101)",
-    "On-Bottom Stability (DNV-RP-F109)",
-    "End Expansion (DNV-ST-F101)"
-])
-
-# ============ WALL THICKNESS CALCULATOR ============
-if calc_type == "Wall Thickness (ASME/API)":
-    st.header("Wall Thickness Calculator")
-    st.markdown("**ASME B31.8/B31.4 + API RP 1111**")
-
-    with st.expander("📚 Understanding Wall Thickness Design"):
-        st.markdown('''
-        The wall thickness must be sufficient to:
-        1. **Contain Internal Pressure** (Hoop Stress) - t = P × OD / (2 × SMYS × f_d)
-        2. **Resist External Pressure** (Collapse) - Critical for deepwater
-        3. **Prevent Buckle Propagation** - P_pr = 24 × SMYS × (t/OD)^2.4
-        ''')
-
-    col1, col2 = st.columns(2)
-    with col1:
-        code = st.selectbox("Design Code", ["ASME B31.8 (Gas)", "ASME B31.4 (Liquid)"])
-        nps = st.selectbox("Pipe Size (NPS)", list(NPS_OD.keys()), index=7)
-        OD = NPS_OD[nps]
-        st.info(f"OD: {OD} mm")
-        grade = st.selectbox("Material Grade", list(GRADES.keys()), index=1)
-        SMYS, SMTS = GRADES[grade]
-        st.info(f"SMYS: {SMYS} MPa | SMTS: {SMTS} MPa")
-
-    with col2:
-        P_design = st.number_input("Design Pressure (MPa)", 0.1, 50.0, 10.0, 0.5)
-        T_design = st.number_input("Design Temperature (°C)", -40.0, 200.0, 85.0)
-        depth = st.number_input("Water Depth (m)", 0.0, 3000.0, 100.0, 10.0)
-        CA = st.number_input("Corrosion Allowance (mm)", 0.0, 10.0, 3.0, 0.5)
-
-    f_d = 0.5 if "B31.8" in code else 0.6
-    f_T = 1.0 if T_design <= 121 else 0.967
-    tol = 0.9
-
-    # Calculations
-    t_hoop = (P_design * OD) / (2 * SMYS * f_d * f_T) / tol + CA
-    P_ext = 1025 * 9.81 * depth / 1e6
-    t_buckle = OD * (P_ext / (0.8 * 24 * SMYS))**(1/2.4) + CA if P_ext > 0 else 0
-    t_min = max(t_hoop, t_buckle)
-
-    std_wt = [6.35, 7.92, 9.53, 11.13, 12.7, 14.27, 15.88, 17.48, 19.05, 22.23, 25.4]
-    t_sel = min([w for w in std_wt if w >= t_min], default=std_wt[-1])
-
-    st.markdown("---")
-    st.subheader("Results")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Hoop WT", f"{t_hoop:.2f} mm")
-    c2.metric("Buckle WT", f"{t_buckle:.2f} mm")
-    c3.metric("Min Required", f"{t_min:.2f} mm")
-    c4.metric("Selected WT", f"{t_sel:.2f} mm")
-
-    # Chart
-    fig = make_subplots(rows=1, cols=2, subplot_titles=("WT vs Pressure", "WT Components"))
-    pressures = np.linspace(1, 30, 30)
-    wts = [(p * OD) / (2 * SMYS * f_d * f_T) / tol + CA for p in pressures]
-    fig.add_trace(go.Scatter(x=pressures, y=wts, name="Required WT"), row=1, col=1)
-    fig.add_hline(y=t_sel, line_dash="dash", line_color="red", row=1, col=1)
-    fig.add_trace(go.Bar(x=["Hoop", "Buckle", "Selected"], y=[t_hoop, t_buckle, t_sel]), row=1, col=2)
-    fig.update_layout(height=400, showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
-
-    with st.expander("📐 Formulas"):
-        st.latex(r"t_{hoop} = \\frac{P \\times OD}{2 \\times SMYS \\times f_d \\times f_T}")
-        st.latex(r"P_{pr} = 24 \\times SMYS \\times (t/OD)^{2.4}")
-
-# ============ FREE SPAN CALCULATOR ============
-elif calc_type == "Free Span (DNV-RP-F105)":
-    st.header("Free Span Calculator")
-    st.markdown("**DNV-RP-F105** | VIV Screening")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        L_span = st.number_input("Span Length (m)", 1.0, 100.0, 15.0)
-        OD = st.number_input("Outside Diameter (mm)", 100.0, 1500.0, 323.9)
-        WT = st.number_input("Wall Thickness (mm)", 5.0, 50.0, 12.7)
-        t_conc = st.number_input("Concrete Thickness (mm)", 0.0, 150.0, 40.0)
-    with col2:
-        depth = st.number_input("Water Depth (m)", 5.0, 500.0, 50.0, key="fs_depth")
-        Uc = st.number_input("Current Velocity (m/s)", 0.0, 3.0, 0.6)
-        T_op = st.number_input("Operating Temp (°C)", 0.0, 150.0, 60.0)
-        T_amb = st.number_input("Ambient Temp (°C)", 0.0, 40.0, 15.0)
-
-    # Section properties
-    D_total = (OD + 2*t_conc) / 1000
-    ID = OD - 2*WT
-    A_st = np.pi/4 * ((OD/1000)**2 - (ID/1000)**2)
-    I_st = np.pi/64 * ((OD/1000)**4 - (ID/1000)**4)
-    m_st = A_st * 7850
-    m_conc = np.pi/4 * (D_total**2 - (OD/1000)**2) * 3000
-    m_water = np.pi/4 * D_total**2 * 1025
-    m_eff = m_st + m_conc + m_water
-
-    E = 207e9
-    EI = E * I_st
-    C1 = np.pi**2
-
-    f_n = (C1 / (2*np.pi)) * np.sqrt(EI / (m_eff * L_span**4))
-    St = 0.2
-    U_cr = f_n * D_total / St
-
-    screening = Uc / U_cr if U_cr > 0 else 999
-    status = "PASS" if screening < 0.8 else "FAIL"
-
-    st.markdown("---")
-    st.subheader("Results")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Natural Freq", f"{f_n:.3f} Hz")
-    c2.metric("Onset Velocity", f"{U_cr:.2f} m/s")
-    c3.metric("Screening Ratio", f"{screening:.2f}")
-    c4.metric("VIV Status", status)
-
-    if status == "PASS":
-        st.success("No VIV expected at this span length")
-    else:
-        st.error("VIV likely - reduce span length or increase stiffness")
-
-    # Chart
-    spans = np.linspace(5, 50, 30)
-    freqs = [(C1/(2*np.pi)) * np.sqrt(EI/(m_eff*L**4)) for L in spans]
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=spans, y=freqs, name="Natural Frequency"))
-    fig.add_vline(x=L_span, line_dash="dash", line_color="red")
-    fig.update_layout(xaxis_title="Span Length (m)", yaxis_title="Frequency (Hz)", height=350)
-    st.plotly_chart(fig, use_container_width=True)
-
-# ============ CP ANODE CALCULATOR ============
-elif calc_type == "CP Anode (DNV-RP-F103)":
-    st.header("CP Anode Calculator")
-    st.markdown("**DNV-RP-F103** | Cathodic Protection Design")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        condition = st.selectbox("Pipeline Condition", ["Unburied", "Buried"])
-        design_life = st.number_input("Design Life (years)", 5, 40, 15)
-        length = st.number_input("Pipeline Length (m)", 100.0, 100000.0, 5000.0)
-        OD = st.number_input("Pipe OD (mm)", 100.0, 1500.0, 406.4, key="cp_od")
-    with col2:
-        coating = st.selectbox("Coating Type", ["FBE + CWC", "3LPE/3LPP", "Asphalt"])
-        temp = st.number_input("Temperature (°C)", 0.0, 150.0, 50.0)
-        material = st.selectbox("Material", ["Carbon Steel", "13Cr Stainless", "Duplex"])
-
-    # Calculate surface area
-    A_surface = np.pi * (OD/1000) * length
-
-    # Current density based on condition
-    ic_base = 20 if condition == "Unburied" else 3
-
-    # Coating factor
-    fc = {"FBE + CWC": 0.02, "3LPE/3LPP": 0.01, "Asphalt": 0.03}[coating]
-
-    # Material factor
-    mat_f = {"Carbon Steel": 1.0, "13Cr Stainless": 0.7, "Duplex": 0.5}[material]
-
-    # Current demand
-    I_demand = A_surface * fc * ic_base * mat_f / 1000
-
-    # Anode weight (Al capacity = 2000 Ah/kg)
-    W_anode = I_demand * design_life * 8760 / (0.85 * 2000)
-    n_anodes = int(np.ceil(W_anode / 150))
-
-    # CPR check
-    current_density = I_demand / A_surface
-    cpr = "PASS" if current_density < 0.05 else "FAIL"
-
-    st.markdown("---")
-    st.subheader("Results")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Current Demand", f"{I_demand:.1f} A")
-    c2.metric("Anode Weight", f"{W_anode:.0f} kg")
-    c3.metric("Number of Anodes", f"{n_anodes}")
-    c4.metric("SSCC Check (CPR)", cpr)
-
-    if cpr == "PASS":
-        st.success("Pipeline protected from stress corrosion cracking")
-    else:
-        st.error("SSCC Risk - consider burying pipeline or improving coating")
-
-# ============ CORROSION ASSESSMENT ============
-elif calc_type == "Corrosion Assessment (DNV-RP-F101)":
-    st.header("Corrosion Assessment")
-    st.markdown("**DNV-RP-F101** | Corroded Pipeline Evaluation")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        OD = st.number_input("Outside Diameter (mm)", 100.0, 1500.0, 323.9, key="corr_od")
-        WT = st.number_input("Wall Thickness (mm)", 5.0, 50.0, 12.7, key="corr_wt")
-        SMTS = st.number_input("SMTS (MPa)", 350.0, 700.0, 460.0)
-    with col2:
-        d_defect = st.number_input("Defect Depth (mm)", 0.1, float(WT-0.1), 4.0)
-        L_defect = st.number_input("Defect Length (mm)", 1.0, 1000.0, 100.0)
-        P_op = st.number_input("Operating Pressure (MPa)", 0.1, 50.0, 8.0)
-
-    # Intact burst pressure
-    P_b = 2 * WT * SMTS * 0.96 / OD
-
-    # Length correction
-    Q = np.sqrt(1 + 0.31 * (L_defect / np.sqrt(OD * WT))**2)
-
-    # Defect burst pressure
-    d_ratio = d_defect / WT
-    P_f = P_b * (1 - d_ratio) / (1 - d_ratio/Q) if d_defect < WT else 0
-
-    # Safe pressure
-    P_safe = P_f / 1.1
-
-    margin = P_safe / P_op if P_op > 0 else 999
-    status = "PASS" if margin >= 1.0 else "FAIL"
-
-    st.markdown("---")
-    st.subheader("Results")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Depth Ratio", f"{d_ratio*100:.1f}%")
-    c2.metric("Burst Pressure", f"{P_f:.1f} MPa")
-    c3.metric("Safe Pressure", f"{P_safe:.1f} MPa")
-    c4.metric("Status", status)
-
-    if status == "PASS":
-        st.success(f"Safe to operate at {P_op} MPa (margin: {margin:.2f})")
-    else:
-        st.error(f"Reduce pressure below {P_safe:.1f} MPa or repair")
-
-    # Chart
-    depths = np.linspace(0.1, WT*0.9, 30)
-    strengths = [P_b * (1 - d/WT) / (1 - d/(WT*Q)) / P_b * 100 for d in depths]
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=depths/WT*100, y=strengths))
-    fig.add_vline(x=d_ratio*100, line_dash="dash", line_color="red")
-    fig.update_layout(xaxis_title="Depth Ratio (%)", yaxis_title="Remaining Strength (%)", height=350)
-    st.plotly_chart(fig, use_container_width=True)
-
-# ============ ON-BOTTOM STABILITY ============
-elif calc_type == "On-Bottom Stability (DNV-RP-F109)":
-    st.header("On-Bottom Stability")
-    st.markdown("**DNV-RP-F109** | Lateral Stability Check")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        OD = st.number_input("Steel OD (mm)", 100.0, 1500.0, 323.9, key="obs_od")
-        WT = st.number_input("Wall Thickness (mm)", 5.0, 50.0, 15.9, key="obs_wt")
-        t_conc = st.number_input("Concrete Thickness (mm)", 0.0, 200.0, 50.0, key="obs_conc")
-        rho_conc = st.number_input("Concrete Density (kg/m³)", 2000, 4000, 3040)
-    with col2:
-        depth = st.number_input("Water Depth (m)", 5.0, 500.0, 80.0, key="obs_depth")
-        Hs = st.number_input("Sig. Wave Height (m)", 0.5, 20.0, 6.0)
-        Tp = st.number_input("Peak Period (s)", 5.0, 25.0, 12.0)
-        Uc = st.number_input("Current (m/s)", 0.0, 3.0, 0.6, key="obs_uc")
-        mu = st.number_input("Friction Coeff", 0.1, 1.0, 0.6)
-
-    # Section properties
-    D_total = (OD + 2*t_conc) / 1000
-    ID = OD - 2*WT
-    A_st = np.pi/4 * ((OD/1000)**2 - (ID/1000)**2)
-    A_conc = np.pi/4 * (D_total**2 - (OD/1000)**2)
-
-    m_st = A_st * 7850
-    m_conc = A_conc * rho_conc
-    m_total = m_st + m_conc
-    m_disp = np.pi/4 * D_total**2 * 1025
-    W_sub = (m_total - m_disp) * 9.81
-    SG = m_total / m_disp if m_disp > 0 else 0
-
-    # Wave velocity (simplified)
-    L0 = 9.81 * Tp**2 / (2*np.pi)
-    k = 2*np.pi / L0
-    U_w = np.pi * Hs / Tp / np.sinh(k * depth) if depth > 0 else 0
-    U_total = U_w + Uc
-
-    # Forces
-    C_D, C_L = 0.7, 0.9
-    F_D = 0.5 * 1025 * C_D * D_total * U_total**2
-    F_L = 0.5 * 1025 * C_L * D_total * U_total**2
-
-    # Unity check
-    UC = 1.1 * F_D / (mu * (W_sub - F_L)) if (W_sub - F_L) > 0 else 999
-    status = "PASS" if UC <= 1.0 else "FAIL"
-
-    st.markdown("---")
-    st.subheader("Results")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Submerged Weight", f"{W_sub:.0f} N/m")
-    c2.metric("Specific Gravity", f"{SG:.2f}")
-    c3.metric("Unity Check", f"{UC:.2f}")
-    c4.metric("Status", status)
-
-    if status == "PASS":
-        st.success("Pipeline is stable")
-    else:
-        st.error("Increase concrete thickness or density")
-
-    # Chart - UC vs concrete
-    concs = np.linspace(20, 150, 30)
-    UCs = []
-    for tc in concs:
-        Dt = (OD + 2*tc) / 1000
-        Ac = np.pi/4 * (Dt**2 - (OD/1000)**2)
-        mc = Ac * rho_conc
-        mt = m_st + mc
-        md = np.pi/4 * Dt**2 * 1025
-        Ws = (mt - md) * 9.81
-        Fd = 0.5 * 1025 * C_D * Dt * U_total**2
-        Fl = 0.5 * 1025 * C_L * Dt * U_total**2
-        uc = 1.1 * Fd / (mu * (Ws - Fl)) if (Ws - Fl) > 0 else 5
-        UCs.append(min(uc, 3))
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=concs, y=UCs))
-    fig.add_hline(y=1.0, line_dash="dash", line_color="red")
-    fig.add_vline(x=t_conc, line_dash="dash", line_color="green")
-    fig.update_layout(xaxis_title="Concrete Thickness (mm)", yaxis_title="Unity Check", height=350)
-    st.plotly_chart(fig, use_container_width=True)
-
-# ============ END EXPANSION ============
-elif calc_type == "End Expansion (DNV-ST-F101)":
-    st.header("End Expansion Calculator")
-    st.markdown("**DNV-ST-F101** | Thermal Expansion Analysis")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        OD = st.number_input("Outside Diameter (mm)", 100.0, 1500.0, 406.4, key="ee_od")
-        WT = st.number_input("Wall Thickness (mm)", 5.0, 50.0, 14.27, key="ee_wt")
-        L_pipe = st.number_input("Pipeline Length (m)", 100.0, 50000.0, 5000.0)
-    with col2:
-        T_op = st.number_input("Operating Temp (°C)", 0.0, 150.0, 85.0, key="ee_top")
-        T_amb = st.number_input("Ambient Temp (°C)", -10.0, 40.0, 20.0, key="ee_tamb")
-        P_op = st.number_input("Operating Pressure (MPa)", 0.0, 50.0, 10.0, key="ee_pop")
-        f_axial = st.number_input("Axial Friction (N/m²)", 100.0, 5000.0, 1500.0)
-
-    # Properties
-    E = 207e9
-    alpha = 11.7e-6
-    ID = OD - 2*WT
-    A_st = np.pi/4 * ((OD/1000)**2 - (ID/1000)**2)
-    A_int = np.pi/4 * (ID/1000)**2
-    D_outer = OD/1000 + 0.05  # Assume 50mm coating
-
-    delta_T = T_op - T_amb
-
-    # Forces
-    F_thermal = E * A_st * alpha * delta_T
-    F_pressure = P_op * 1e6 * A_int * (1 - 2*0.3)
-    S_eff = F_thermal - F_pressure
-
-    # Anchor length
-    L_anchor = abs(S_eff) / (f_axial * np.pi * D_outer)
-    L_anchor = min(L_anchor, L_pipe/2)
-
-    # End expansion
-    delta = abs(S_eff) * L_anchor / (2 * E * A_st)
-
-    st.markdown("---")
-    st.subheader("Results")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Temp Rise", f"{delta_T:.0f} °C")
-    c2.metric("Thermal Force", f"{F_thermal/1e6:.2f} MN")
-    c3.metric("Anchor Length", f"{L_anchor:.0f} m")
-    c4.metric("End Expansion", f"{delta*1000:.0f} mm")
-
-    if delta > 0.5:
-        st.warning(f"Large expansion ({delta*1000:.0f} mm) - consider expansion loops")
-    else:
-        st.success(f"Expansion of {delta*1000:.0f} mm is manageable")
-
-    # Chart
-    temps = np.linspace(20, 100, 30)
-    expansions = []
-    for dT in temps:
-        Fth = E * A_st * alpha * dT
-        Seff = Fth - F_pressure
-        La = min(abs(Seff) / (f_axial * np.pi * D_outer), L_pipe/2)
-        d = abs(Seff) * La / (2 * E * A_st)
-        expansions.append(d * 1000)
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=temps, y=expansions))
-    fig.add_vline(x=delta_T, line_dash="dash", line_color="red")
-    fig.update_layout(xaxis_title="Temperature Rise (°C)", yaxis_title="End Expansion (mm)", height=350)
-    st.plotly_chart(fig, use_container_width=True)
-
-# Footer
-st.sidebar.markdown("---")
-st.sidebar.markdown("### References")
-st.sidebar.markdown("- DNV-RP-F105/F109/F101/F103")
-st.sidebar.markdown("- ASME B31.8/B31.4")
-st.sidebar.markdown("- API RP 1111")
-st.sidebar.markdown("---")
-st.sidebar.caption("v1.0 | Educational Tool")
-`
-            },
-            streamlitConfig: {
-                "theme.primaryColor": "#1E3A5F",
-                "theme.backgroundColor": "#FFFFFF",
-                "theme.secondaryBackgroundColor": "#F0F2F6"
-            }
-        }, document.getElementById("root")).then(() => {
-            document.getElementById("loading").style.display = "none";
-        });
-    </script>
+<div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">PE</div>
+            <span class="logo-text">Pipeline Suite</span>
+        </div>
+        <nav class="nav-section">
+            <div class="nav-label">Overview</div>
+            <div class="nav-item active" onclick="showPanel('dashboard')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+                <span class="nav-text">Dashboard</span>
+            </div>
+
+            <div class="nav-label">Calculators</div>
+            <div class="nav-item" onclick="showPanel('wt')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg></span>
+                <span class="nav-text">Wall Thickness</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('fs')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 12h4l3-9 6 18 3-9h4"/></svg></span>
+                <span class="nav-text">Free Span</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('cp')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
+                <span class="nav-text">CP Anode</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('cor')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg></span>
+                <span class="nav-text">Corrosion</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('obs')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 22V8M5 12H2a10 10 0 0020 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span>
+                <span class="nav-text">Stability</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('exp')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8h3a1 1 0 011 1v6a1 1 0 01-1 1h-3M6 8H3a1 1 0 00-1 1v6a1 1 0 001 1h3M6 12h12"/></svg></span>
+                <span class="nav-text">Expansion</span>
+            </div>
+
+            <div class="nav-label">Analysis</div>
+            <div class="nav-item" onclick="showPanel('mc')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><circle cx="17" cy="17" r="3"/></svg></span>
+                <span class="nav-text">Monte Carlo</span>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+        <header class="header">
+            <div>
+                <div class="header-title" id="pageTitle">Project Dashboard</div>
+                <div class="header-subtitle">DNV-ST-F101 | DNV-RP-F105 | DNV-RP-F109 | ASME B31.8 | API RP 1111</div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-ghost" onclick="saveProject()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+                    Save
+                </button>
+                <button class="btn btn-ghost" onclick="exportPDF()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Export PDF
+                </button>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Dashboard Panel -->
+            <div class="panel active" id="panel-dashboard">
+                <div class="kpi-grid">
+                    <div class="kpi-card" onclick="showPanel('wt')">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background:rgba(59,130,246,0.15);color:var(--chart-1)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+                            </div>
+                            <div class="kpi-status pending" id="kpi-wt-status"></div>
+                        </div>
+                        <div class="kpi-title">Wall Thickness</div>
+                        <div class="kpi-value" id="kpi-wt-value">--<span class="kpi-unit"> mm</span></div>
+                        <div class="kpi-subtitle">ASME B31.8 / API 1111</div>
+                    </div>
+                    <div class="kpi-card" onclick="showPanel('fs')">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background:rgba(16,185,129,0.15);color:var(--chart-2)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-9 6 18 3-9h4"/></svg>
+                            </div>
+                            <div class="kpi-status pending" id="kpi-fs-status"></div>
+                        </div>
+                        <div class="kpi-title">Free Span VIV</div>
+                        <div class="kpi-value" id="kpi-fs-value">--<span class="kpi-unit"></span></div>
+                        <div class="kpi-subtitle">DNV-RP-F105</div>
+                    </div>
+                    <div class="kpi-card" onclick="showPanel('cp')">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background:rgba(139,92,246,0.15);color:var(--chart-3)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            </div>
+                            <div class="kpi-status pending" id="kpi-cp-status"></div>
+                        </div>
+                        <div class="kpi-title">CP Anode Mass</div>
+                        <div class="kpi-value" id="kpi-cp-value">--<span class="kpi-unit"> kg</span></div>
+                        <div class="kpi-subtitle">DNV-RP-F103</div>
+                    </div>
+                    <div class="kpi-card" onclick="showPanel('cor')">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background:rgba(245,158,11,0.15);color:var(--chart-4)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            </div>
+                            <div class="kpi-status pending" id="kpi-cor-status"></div>
+                        </div>
+                        <div class="kpi-title">Corrosion ERF</div>
+                        <div class="kpi-value" id="kpi-cor-value">--<span class="kpi-unit"></span></div>
+                        <div class="kpi-subtitle">DNV-RP-F101</div>
+                    </div>
+                    <div class="kpi-card" onclick="showPanel('obs')">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background:rgba(236,72,153,0.15);color:var(--chart-5)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V8M5 12H2a10 10 0 0020 0h-3"/><circle cx="12" cy="5" r="3"/></svg>
+                            </div>
+                            <div class="kpi-status pending" id="kpi-obs-status"></div>
+                        </div>
+                        <div class="kpi-title">Stability UC</div>
+                        <div class="kpi-value" id="kpi-obs-value">--<span class="kpi-unit"></span></div>
+                        <div class="kpi-subtitle">DNV-RP-F109</div>
+                    </div>
+                    <div class="kpi-card" onclick="showPanel('exp')">
+                        <div class="kpi-header">
+                            <div class="kpi-icon" style="background:rgba(59,130,246,0.15);color:var(--chart-1)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h3v8h-3M6 8H3v8h3M6 12h12"/></svg>
+                            </div>
+                            <div class="kpi-status pending" id="kpi-exp-status"></div>
+                        </div>
+                        <div class="kpi-title">End Expansion</div>
+                        <div class="kpi-value" id="kpi-exp-value">--<span class="kpi-unit"> mm</span></div>
+                        <div class="kpi-subtitle">DNV-ST-F101</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                                Project Overview
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="dashChart" style="height:280px;"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                                Recent Calculations
+                            </div>
+                        </div>
+                        <div class="card-body" style="max-height:280px;overflow-y:auto;" id="historyList">
+                            <div class="text-muted text-sm" style="text-align:center;padding:40px;">No calculations yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wall Thickness Panel -->
+            <div class="panel" id="panel-wt">
+                <div class="tabs">
+                    <button class="tab active" onclick="showWtTab('inputs')">Inputs</button>
+                    <button class="tab" onclick="showWtTab('results')">Results</button>
+                    <button class="tab" onclick="showWtTab('analysis')">Sensitivity</button>
+                </div>
+
+                <div id="wt-inputs">
+                    <div class="grid-3">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Design Code</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Standard</label>
+                                    <select class="input" id="wt_code">
+                                        <option value="1">ASME B31.8 + API 1111 (Gas)</option>
+                                        <option value="2">ASME B31.4 + API 1111 (Liquid)</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">NPS</label>
+                                        <select class="input" id="wt_nps" onchange="updateOD()">
+                                            <option value="6">6"</option><option value="8">8"</option><option value="10">10"</option>
+                                            <option value="12">12"</option><option value="14">14"</option><option value="16" selected>16"</option>
+                                            <option value="18">18"</option><option value="20">20"</option><option value="24">24"</option>
+                                            <option value="30">30"</option><option value="36">36"</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Grade</label>
+                                        <select class="input" id="wt_grade" onchange="updateGrade()">
+                                            <option value="1">Gr.B</option><option value="2" selected>X42</option><option value="3">X46</option>
+                                            <option value="4">X52</option><option value="5">X56</option><option value="6">X60</option>
+                                            <option value="7">X65</option><option value="8">X70</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">OD</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="wt_od" value="406.4" readonly>
+                                            <span class="input-suffix">mm</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">SMYS</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="wt_smys" value="290" readonly>
+                                            <span class="input-suffix">MPa</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Operating Conditions</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Design Pressure</label>
+                                    <div class="slider-wrap">
+                                        <input type="range" class="slider" id="wt_p_slider" min="1" max="30" step="0.5" value="4.5" oninput="syncSlider('wt_p')">
+                                        <span class="slider-value" id="wt_p_val">4.5 MPa</span>
+                                    </div>
+                                    <input type="hidden" id="wt_p" value="4.5">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Design Temperature</label>
+                                    <div class="slider-wrap">
+                                        <input type="range" class="slider" id="wt_t_slider" min="0" max="200" value="85" oninput="syncSlider('wt_t')">
+                                        <span class="slider-value" id="wt_t_val">85 C</span>
+                                    </div>
+                                    <input type="hidden" id="wt_t" value="85">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Corrosion Allowance</label>
+                                    <div class="input-group">
+                                        <input type="number" class="input" id="wt_ca" value="3" step="0.5">
+                                        <span class="input-suffix">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Environment</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Water Depth</label>
+                                    <div class="slider-wrap">
+                                        <input type="range" class="slider" id="wt_wd_slider" min="0" max="300" value="66.6" oninput="syncSlider('wt_wd')">
+                                        <span class="slider-value" id="wt_wd_val">66.6 m</span>
+                                    </div>
+                                    <input type="hidden" id="wt_wd" value="66.6">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Below Seabed</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="wt_bs" value="15">
+                                            <span class="input-suffix">m</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Pipeline Length</label>
+                                        <div class="input-group">
+                                            <input type="number" class="input" id="wt_len" value="8127">
+                                            <span class="input-suffix">m</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="calcWT()">
+                                    Calculate Wall Thickness
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wt-results" style="display:none;">
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Wall Thickness Calculation</div></div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead><tr><th>Check</th><th>Value</th><th>Unit</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>t1 - B31.8 Hoop</td><td class="value" id="r_t1">--</td><td>mm</td></tr>
+                                        <tr><td>t2 - B31.8 Incidental</td><td class="value" id="r_t2">--</td><td>mm</td></tr>
+                                        <tr><td>t3 - API 1111 Net</td><td class="value" id="r_t3">--</td><td>mm</td></tr>
+                                        <tr><td>t4 - API 1111 Incidental</td><td class="value" id="r_t4">--</td><td>mm</td></tr>
+                                        <tr style="background:var(--bg-tertiary);"><td><strong>Governing Hoop WT</strong></td><td class="value" id="r_thoop">--</td><td>mm</td></tr>
+                                        <tr><td>Buckle Propagation WT</td><td class="value" id="r_tbuck">--</td><td>mm</td></tr>
+                                        <tr style="background:var(--bg-tertiary);"><td><strong>Min Required WT</strong></td><td class="value" id="r_tmin">--</td><td>mm</td></tr>
+                                        <tr style="background:var(--accent-muted);"><td><strong>Selected Standard WT</strong></td><td class="value" style="font-size:18px;" id="r_tsel">--</td><td>mm</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Design Checks</div></div>
+                            <div class="card-body">
+                                <div class="result-row">
+                                    <span class="result-label">Collapse Check</span>
+                                    <span><span class="status" id="c_stat">--</span> <span class="text-mono text-muted text-sm" id="c_uc"></span></span>
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label">Propagation Check</span>
+                                    <span><span class="status" id="p_stat">--</span> <span class="text-mono text-muted text-sm" id="p_uc"></span></span>
+                                </div>
+                                <div class="result-row result-highlight">
+                                    <span class="result-label">Steel Weight</span>
+                                    <span class="result-value" id="w_st">-- kg/m</span>
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label">Total Weight</span>
+                                    <span class="result-value" id="w_tot">-- tonnes</span>
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label">Est. Cost (Seamless)</span>
+                                    <span class="result-value" id="w_cost">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wt-analysis" style="display:none;">
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Grade Sensitivity</div></div>
+                            <div class="card-body"><div id="wtGradeChart" class="chart-container"></div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Input Impact (Tornado)</div></div>
+                            <div class="card-body"><div id="wtTornadoChart" class="chart-container"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Free Span Panel -->
+            <div class="panel" id="panel-fs">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Span Geometry</div></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Span IL</label><div class="input-group"><input type="number" class="input" id="fs_lil" value="6.5" step="0.1"><span class="input-suffix">m</span></div></div>
+                                <div class="form-group"><label class="form-label">Span CF</label><div class="input-group"><input type="number" class="input" id="fs_lcf" value="10" step="0.1"><span class="input-suffix">m</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Ext Diameter</label><div class="input-group"><input type="number" class="input" id="fs_de" value="168.3"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Wall Thickness</label><div class="input-group"><input type="number" class="input" id="fs_wt" value="9.53"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Current Uc</label><div class="input-group"><input type="number" class="input" id="fs_uc" value="0.5" step="0.1"><span class="input-suffix">m/s</span></div></div>
+                                <div class="form-group"><label class="form-label">Wave Uw</label><div class="input-group"><input type="number" class="input" id="fs_uw" value="0.8" step="0.1"><span class="input-suffix">m/s</span></div></div>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcFS()">Calculate VIV Screening</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">VIV Results</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Natural Freq IL</span><span class="result-value text-mono" id="fs_fnil">-- Hz</span></div>
+                            <div class="result-row"><span class="result-label">Natural Freq CF</span><span class="result-value text-mono" id="fs_fncf">-- Hz</span></div>
+                            <div class="result-row"><span class="result-label">Required Freq IL</span><span class="result-value text-mono" id="fs_fnreqil">-- Hz</span></div>
+                            <div class="result-row"><span class="result-label">Required Freq CF</span><span class="result-value text-mono" id="fs_fnreqcf">-- Hz</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">IL VIV Ratio</span><span><span class="result-value text-mono" id="fs_ilrat">--</span> <span class="status" id="fs_il_stat">--</span></span></div>
+                            <div class="result-row result-highlight"><span class="result-label">CF VIV Ratio</span><span><span class="result-value text-mono" id="fs_cfrat">--</span> <span class="status" id="fs_cf_stat">--</span></span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Frequency Comparison</div></div>
+                        <div class="card-body"><div id="fsChart" class="chart-container"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CP Anode Panel -->
+            <div class="panel" id="panel-cp">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Pipeline Data</div></div>
+                        <div class="card-body">
+                            <div class="form-group"><label class="form-label">Condition</label><select class="input" id="cp_cond"><option value="1">Buried</option><option value="2" selected>Unburied</option></select></div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Design Life</label><div class="input-group"><input type="number" class="input" id="cp_life" value="15"><span class="input-suffix">yrs</span></div></div>
+                                <div class="form-group"><label class="form-label">Segment Length</label><div class="input-group"><input type="number" class="input" id="cp_len" value="7492"><span class="input-suffix">m</span></div></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Pipe OD</label><div class="input-group"><input type="number" class="input" id="cp_od" value="406.4"><span class="input-suffix">mm</span></div></div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcCP()">Calculate CP Requirements</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Results</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Surface Area</span><span class="result-value text-mono" id="cp_area">-- m2</span></div>
+                            <div class="result-row"><span class="result-label">Current Demand</span><span class="result-value text-mono" id="cp_icdem">-- A</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Anode Mass Required</span><span class="result-value text-mono" style="font-size:18px;" id="cp_mass">-- kg</span></div>
+                            <div class="result-row"><span class="result-label">Number of Anodes</span><span class="result-value text-mono" id="cp_num">-- pcs</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">SSCC Check (CPR)</span><span><span class="result-value text-mono" id="cp_cpr">--</span> <span class="status" id="cp_cpr_stat">--</span></span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Anode Depletion</div></div>
+                        <div class="card-body"><div id="cpChart" class="chart-container"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Corrosion Panel -->
+            <div class="panel" id="panel-cor">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Defect Data</div></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Pipe OD</label><div class="input-group"><input type="number" class="input" id="cor_od" value="323.9"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Nominal WT</label><div class="input-group"><input type="number" class="input" id="cor_wt" value="12.7"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Defect Depth</label><div class="input-group"><input type="number" class="input" id="cor_d" value="4.5"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Defect Length</label><div class="input-group"><input type="number" class="input" id="cor_l" value="150"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Design Pressure</label><div class="input-group"><input type="number" class="input" id="cor_pd" value="15"><span class="input-suffix">MPa</span></div></div>
+                                <div class="form-group"><label class="form-label">SMTS</label><div class="input-group"><input type="number" class="input" id="cor_smts" value="535"><span class="input-suffix">MPa</span></div></div>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcCor()">Assess Corrosion</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">DNV-RP-F101 Assessment</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Factored Depth d*</span><span class="result-value text-mono" id="cor_dstar">-- mm</span></div>
+                            <div class="result-row"><span class="result-label">Q Factor</span><span class="result-value text-mono" id="cor_q">--</span></div>
+                            <div class="result-row"><span class="result-label">Corroded Pressure</span><span class="result-value text-mono" id="cor_pcorr">-- MPa</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">ERF (Pd/Pcorr)</span><span class="result-value text-mono" style="font-size:24px;" id="cor_erf">--</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Assessment</span><span class="status" id="cor_stat">--</span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Defect Visualization</div></div>
+                        <div class="card-body"><canvas id="defectCanvas" width="320" height="200" style="width:100%;border-radius:8px;background:var(--bg-tertiary);"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stability Panel -->
+            <div class="panel" id="panel-obs">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Pipe & Environment</div></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Steel OD</label><div class="input-group"><input type="number" class="input" id="obs_od" value="323.9"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Wall Thickness</label><div class="input-group"><input type="number" class="input" id="obs_wt" value="15.9"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Concrete Coat</label><div class="input-group"><input type="number" class="input" id="obs_tcon" value="50"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Content Density</label><div class="input-group"><input type="number" class="input" id="obs_rhocont" value="850"><span class="input-suffix">kg/m3</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Water Depth</label><div class="input-group"><input type="number" class="input" id="obs_wd" value="80"><span class="input-suffix">m</span></div></div>
+                                <div class="form-group"><label class="form-label">Sig Wave Hs</label><div class="input-group"><input type="number" class="input" id="obs_hs" value="14"><span class="input-suffix">m</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Peak Period Tp</label><div class="input-group"><input type="number" class="input" id="obs_tp" value="16"><span class="input-suffix">s</span></div></div>
+                                <div class="form-group"><label class="form-label">Current Vc</label><div class="input-group"><input type="number" class="input" id="obs_vc" value="0.8"><span class="input-suffix">m/s</span></div></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Friction Coeff</label><input type="number" class="input" id="obs_mu" value="0.6"></div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcOBS()">Calculate Stability</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Force Analysis</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Total OD</span><span class="result-value text-mono" id="obs_dtot">-- m</span></div>
+                            <div class="result-row"><span class="result-label">Submerged Weight</span><span class="result-value text-mono" id="obs_ws">-- N/m</span></div>
+                            <div class="result-row"><span class="result-label">Drag Force</span><span class="result-value text-mono" id="obs_fd">-- N/m</span></div>
+                            <div class="result-row"><span class="result-label">Lift Force</span><span class="result-value text-mono" id="obs_fl">-- N/m</span></div>
+                            <div class="result-row"><span class="result-label">Inertia Force</span><span class="result-value text-mono" id="obs_fi">-- N/m</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Unity Check</span><span class="result-value text-mono" style="font-size:24px;" id="obs_uc">--</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Status</span><span class="status" id="obs_stat">--</span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Force Distribution</div></div>
+                        <div class="card-body"><div id="obsChart" class="chart-container"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expansion Panel -->
+            <div class="panel" id="panel-exp">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Pipe Data</div></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">OD</label><div class="input-group"><input type="number" class="input" id="exp_od" value="323.9"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Wall Thickness</label><div class="input-group"><input type="number" class="input" id="exp_wt" value="15.9"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Pipe Length</label><div class="input-group"><input type="number" class="input" id="exp_l" value="1000"><span class="input-suffix">m</span></div></div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Operating Temp</label><div class="input-group"><input type="number" class="input" id="exp_top" value="85"><span class="input-suffix">C</span></div></div>
+                                <div class="form-group"><label class="form-label">Install Temp</label><div class="input-group"><input type="number" class="input" id="exp_tlay" value="20"><span class="input-suffix">C</span></div></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Int Pressure</label><div class="input-group"><input type="number" class="input" id="exp_pi" value="15"><span class="input-suffix">MPa</span></div></div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcExp()">Calculate Expansion</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Expansion Results</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Temperature Diff</span><span class="result-value text-mono" id="exp_dt">-- C</span></div>
+                            <div class="result-row"><span class="result-label">Thermal Strain</span><span class="result-value text-mono" id="exp_eth">--</span></div>
+                            <div class="result-row"><span class="result-label">Bourdon Strain</span><span class="result-value text-mono" id="exp_eb">--</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Total Expansion</span><span class="result-value text-mono" style="font-size:24px;" id="exp_delta">-- mm</span></div>
+                            <div class="result-row"><span class="result-label">Virtual Anchor Length</span><span class="result-value text-mono" id="exp_lva">-- m</span></div>
+                            <div class="result-row"><span class="result-label">Utilization Ratio</span><span class="result-value text-mono" id="exp_ur">--</span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Temperature vs Expansion</div></div>
+                        <div class="card-body"><div id="expChart" class="chart-container"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monte Carlo Panel -->
+            <div class="panel" id="panel-mc">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Input Distributions</div></div>
+                        <div class="card-body">
+                            <div class="form-group"><label class="form-label">Iterations</label><input type="number" class="input" id="mc_iter" value="1000"></div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Pressure Mean</label><div class="input-group"><input type="number" class="input" id="mc_p_mean" value="4.5"><span class="input-suffix">MPa</span></div></div>
+                                <div class="form-group"><label class="form-label">Pressure StD</label><div class="input-group"><input type="number" class="input" id="mc_p_std" value="0.5"><span class="input-suffix">MPa</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">WT Mean</label><div class="input-group"><input type="number" class="input" id="mc_wt_mean" value="12.7"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">WT StD</label><div class="input-group"><input type="number" class="input" id="mc_wt_std" value="0.5"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="runMonteCarlo()">Run Simulation</button>
+                        </div>
+                    </div>
+                    <div class="card" style="grid-column:span 2;">
+                        <div class="card-header"><div class="card-title">Results Distribution</div></div>
+                        <div class="card-body">
+                            <div id="mcChart" style="height:280px;"></div>
+                            <div class="grid-2 mt-4" style="grid-template-columns:repeat(5,1fr);">
+                                <div style="text-align:center;"><div class="text-muted text-sm">Mean</div><div class="text-mono" style="font-size:18px;font-weight:600;" id="mc_mean">--</div></div>
+                                <div style="text-align:center;"><div class="text-muted text-sm">Std Dev</div><div class="text-mono" style="font-size:18px;font-weight:600;" id="mc_std">--</div></div>
+                                <div style="text-align:center;"><div class="text-muted text-sm">5th %ile</div><div class="text-mono" style="font-size:18px;font-weight:600;" id="mc_p5">--</div></div>
+                                <div style="text-align:center;"><div class="text-muted text-sm">95th %ile</div><div class="text-mono" style="font-size:18px;font-weight:600;" id="mc_p95">--</div></div>
+                                <div style="text-align:center;"><div class="text-muted text-sm">P(Failure)</div><div class="text-mono" style="font-size:18px;font-weight:600;color:var(--error);" id="mc_pof">--</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// Data
+const npsOD={6:168.3,8:219.1,10:273.1,12:323.9,14:355.6,16:406.4,18:457.2,20:508,24:609.6,30:762,36:914.4};
+const grades={1:{s:245,t:415},2:{s:290,t:415},3:{s:320,t:435},4:{s:360,t:460},5:{s:390,t:490},6:{s:415,t:520},7:{s:450,t:535},8:{s:485,t:570}};
+let results={},history=[];
+
+// Plotly config
+const plotConfig={displayModeBar:false,responsive:true};
+const plotLayout={paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{family:'Inter',color:'#94a3b8',size:11},margin:{t:20,r:20,b:40,l:50},xaxis:{gridcolor:'#1e293b',zerolinecolor:'#334155'},yaxis:{gridcolor:'#1e293b',zerolinecolor:'#334155'}};
+
+// Navigation
+function showPanel(id){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    event.target.closest('.nav-item').classList.add('active');
+    const titles={dashboard:'Project Dashboard',wt:'Wall Thickness Calculator',fs:'Free Span Analysis',cp:'CP Anode Design',cor:'Corrosion Assessment',obs:'On-Bottom Stability',exp:'End Expansion',mc:'Monte Carlo Simulation'};
+    document.getElementById('pageTitle').textContent=titles[id]||'Dashboard';
+    if(id==='dashboard')updateDashboard();
+}
+
+function showWtTab(tab){
+    document.querySelectorAll('#panel-wt .tabs .tab').forEach(t=>t.classList.remove('active'));
+    event.target.classList.add('active');
+    ['inputs','results','analysis'].forEach(t=>document.getElementById('wt-'+t).style.display=t===tab?'block':'none');
+}
+
+// Helpers
+function updateOD(){document.getElementById('wt_od').value=npsOD[document.getElementById('wt_nps').value]||406.4;}
+function updateGrade(){document.getElementById('wt_smys').value=grades[document.getElementById('wt_grade').value].s;}
+function syncSlider(id){const v=document.getElementById(id+'_slider').value;document.getElementById(id).value=v;document.getElementById(id+'_val').textContent=v+(id.includes('_p')?id==='wt_p'?' MPa':' MPa':id.includes('_t')?' C':' m');}
+
+// Wall Thickness
+function calcWT(){
+    const code=+document.getElementById('wt_code').value,OD=+document.getElementById('wt_od').value,SMYS=+document.getElementById('wt_smys').value,grade=+document.getElementById('wt_grade').value;
+    const P=+document.getElementById('wt_p').value,T=+document.getElementById('wt_t').value,CA=+document.getElementById('wt_ca').value;
+    const wd=+document.getElementById('wt_wd').value,bs=+document.getElementById('wt_bs').value,len=+document.getElementById('wt_len').value;
+    const f1=0.72,fE=0.9,fc=0.75,fp=0.8,fd=code==1?0.5:0.6,fT=T>204?0.867:T>177?0.9:T>149?0.933:T>121?0.967:1;
+    const Pext=1025*9.81*(wd+bs)/1e6,SMTS=grades[grade].t,Seff=Math.min(SMYS,SMTS/1.15);
+    const t1=P*OD/(2*SMYS*f1*fE*fT)+CA,t2=1.1*P*OD/(2*SMYS*f1*fE*fT)+CA,t3=(P-Pext)*OD/(2*0.9*Seff*fd)+CA,t4=(1.1*P-Pext)*OD/(2*0.9*Seff*fd)+CA;
+    const thoop=Math.max(t1,t2,t3,t4),tbuck=OD*Math.pow(Pext/(fp*24*SMYS),1/2.4)+CA,tmin=Math.max(thoop,tbuck),tsel=Math.ceil(tmin*10)/10;
+
+    document.getElementById('r_t1').textContent=t1.toFixed(2);document.getElementById('r_t2').textContent=t2.toFixed(2);
+    document.getElementById('r_t3').textContent=t3.toFixed(2);document.getElementById('r_t4').textContent=t4.toFixed(2);
+    document.getElementById('r_thoop').textContent=thoop.toFixed(2);document.getElementById('r_tbuck').textContent=tbuck.toFixed(2);
+    document.getElementById('r_tmin').textContent=tmin.toFixed(2);document.getElementById('r_tsel').textContent=tsel.toFixed(1);
+
+    const tcorr=tsel-CA,Pel=2*200000*Math.pow(tcorr/OD,3)/(1-0.09),Py=2*SMYS*tcorr/OD,Pc=Pel*Py/Math.sqrt(Pel*Pel+Py*Py);
+    const fcPc=fc*Pc,colPass=fcPc>=Pext,colUC=Pext/fcPc,Ppr=24*SMYS*Math.pow(tcorr/OD,2.4),fpPpr=fp*Ppr,propPass=fpPpr>=Pext,propUC=Pext/fpPpr;
+
+    document.getElementById('c_stat').textContent=colPass?'PASS':'FAIL';document.getElementById('c_stat').className='status '+(colPass?'pass':'fail');document.getElementById('c_uc').textContent='UC: '+colUC.toFixed(3);
+    document.getElementById('p_stat').textContent=propPass?'PASS':'FAIL';document.getElementById('p_stat').className='status '+(propPass?'pass':'fail');document.getElementById('p_uc').textContent='UC: '+propUC.toFixed(3);
+
+    const ID=OD-2*tsel,Ast=Math.PI/4*(OD*OD-ID*ID),Wst=Ast*7850/1e6,totWt=Wst*len/1000;
+    document.getElementById('w_st').textContent=Wst.toFixed(2)+' kg/m';document.getElementById('w_tot').textContent=totWt.toFixed(1)+' tonnes';document.getElementById('w_cost').textContent='$'+Math.round(totWt*1700).toLocaleString();
+
+    results.wt={tsel,pass:colPass&&propPass,Wst,totWt};addHistory('Wall Thickness','WT: '+tsel.toFixed(1)+' mm',colPass&&propPass);updateKPI('wt',tsel.toFixed(1),colPass&&propPass);plotWTCharts(OD,P,Pext,CA,SMYS);
+}
+
+function plotWTCharts(OD,P,Pext,CA,SMYS){
+    const grs=['B','X42','X46','X52','X56','X60','X65','X70'],smyss=[245,290,320,360,390,415,450,485];
+    const wts=smyss.map(s=>Math.max(P*OD/(2*s*0.72*0.9)+CA,OD*Math.pow(Pext/(0.8*24*s),1/2.4)+CA));
+    Plotly.newPlot('wtGradeChart',[{x:grs,y:wts,type:'bar',marker:{color:'#3b82f6'}}],{...plotLayout,xaxis:{...plotLayout.xaxis,title:'Grade'},yaxis:{...plotLayout.yaxis,title:'WT (mm)'}},plotConfig);
+
+    const base=wts[1],factors=[{n:'Pressure +10%',v:calcWTSingle(OD,P*1.1,Pext,CA,290)-base},{n:'Pressure -10%',v:calcWTSingle(OD,P*0.9,Pext,CA,290)-base},{n:'SMYS +10%',v:calcWTSingle(OD,P,Pext,CA,319)-base},{n:'SMYS -10%',v:calcWTSingle(OD,P,Pext,CA,261)-base}];
+    Plotly.newPlot('wtTornadoChart',[{type:'bar',orientation:'h',x:factors.map(f=>f.v),y:factors.map(f=>f.n),marker:{color:factors.map(f=>f.v>0?'#ef4444':'#10b981')}}],{...plotLayout,xaxis:{...plotLayout.xaxis,title:'Change (mm)'}},plotConfig);
+}
+function calcWTSingle(OD,P,Pext,CA,SMYS){return Math.max(P*OD/(2*SMYS*0.72*0.9)+CA,OD*Math.pow(Pext/(0.8*24*SMYS),1/2.4)+CA);}
+
+// Free Span
+function calcFS(){
+    const Lil=+document.getElementById('fs_lil').value,Lcf=+document.getElementById('fs_lcf').value,De=+document.getElementById('fs_de').value/1000,WT=+document.getElementById('fs_wt').value/1000;
+    const Uc=+document.getElementById('fs_uc').value,Uw=+document.getElementById('fs_uw').value,E=208000e6,rhow=1025,Di=De-2*WT,Dtot=De+0.01;
+    const I=Math.PI/64*(De**4-Di**4),Mst=Math.PI/4*(De*De-Di*Di)*7850,Ma=Math.PI/4*Dtot*Dtot*rhow,Me=Ma+Mst,C1=3.56;
+    const fn_il=C1*Math.sqrt(E*I/(Me*Lil**4))/(2*Math.PI),fn_cf=C1*Math.sqrt(E*I/(Me*Lcf**4))/(2*Math.PI);
+    const U=Uc+Uw,fnreq_il=U/(5*Dtot),fnreq_cf=U/(3*Dtot),ilrat=fnreq_il/fn_il,cfrat=fnreq_cf/fn_cf;
+
+    document.getElementById('fs_fnil').textContent=fn_il.toFixed(3)+' Hz';document.getElementById('fs_fncf').textContent=fn_cf.toFixed(3)+' Hz';
+    document.getElementById('fs_fnreqil').textContent=fnreq_il.toFixed(3)+' Hz';document.getElementById('fs_fnreqcf').textContent=fnreq_cf.toFixed(3)+' Hz';
+    document.getElementById('fs_ilrat').textContent=ilrat.toFixed(3);document.getElementById('fs_cfrat').textContent=cfrat.toFixed(3);
+    document.getElementById('fs_il_stat').textContent=ilrat<=1?'PASS':'FAIL';document.getElementById('fs_il_stat').className='status '+(ilrat<=1?'pass':'fail');
+    document.getElementById('fs_cf_stat').textContent=cfrat<=1?'PASS':'FAIL';document.getElementById('fs_cf_stat').className='status '+(cfrat<=1?'pass':'fail');
+
+    const pass=ilrat<=1&&cfrat<=1;results.fs={ilrat,cfrat,pass};addHistory('Free Span','IL: '+ilrat.toFixed(2)+', CF: '+cfrat.toFixed(2),pass);updateKPI('fs','IL:'+ilrat.toFixed(2),pass);
+    Plotly.newPlot('fsChart',[{x:['IL Natural','IL Required','CF Natural','CF Required'],y:[fn_il,fnreq_il,fn_cf,fnreq_cf],type:'bar',marker:{color:['#3b82f6','#64748b','#10b981','#64748b']}}],{...plotLayout,yaxis:{...plotLayout.yaxis,title:'Frequency (Hz)'}},plotConfig);
+}
+
+// CP Anode - DNV-RP-F103 compliant
+function calcCP(){
+    const cond=+document.getElementById('cp_cond').value,life=+document.getElementById('cp_life').value,len=+document.getElementById('cp_len').value,OD=+document.getElementById('cp_od').value;
+    // Surface area calculation
+    const area=Math.PI*OD/1000*len;
+    // Coating breakdown per DNV-RP-F103: fc = 10^a + b*t (FBE+CWC: a=-2.0, b=0.03)
+    const fc_initial=Math.pow(10,-2.0),fc_final=Math.pow(10,-2.0)+0.03*life,fc_mean=(fc_initial+fc_final)/2;
+    // Current density: buried=20mA/m², unburied=100mA/m² (mean values)
+    const ic_base=cond==1?20:100;
+    // Condition factor: buried=1, unburied already has higher ic
+    const condFactor=1.0;
+    // Current demand (A)
+    const Icdem=area*fc_mean*ic_base*condFactor/1000;
+    // Anode mass: M = I*t*8760/(u*C), where u=0.85, C=2000 A·h/kg for Al
+    const utilization=0.85,capacity=2000;
+    const mass=(Icdem*life*8760)/(capacity*utilization);
+    const numAnodes=Math.ceil(mass/150);
+    // CPR check: current density should be < 50 mA/m² to avoid SSCC
+    const currentDensity=Icdem*1000/area,cpr=currentDensity/50;
+
+    document.getElementById('cp_area').textContent=area.toFixed(0)+' m2';document.getElementById('cp_icdem').textContent=Icdem.toFixed(2)+' A';
+    document.getElementById('cp_mass').textContent=mass.toFixed(0)+' kg';document.getElementById('cp_num').textContent=numAnodes+' pcs';
+    document.getElementById('cp_cpr').textContent=cpr.toFixed(3);document.getElementById('cp_cpr_stat').textContent=cpr<1?'PASS':'FAIL';document.getElementById('cp_cpr_stat').className='status '+(cpr<1?'pass':'fail');
+
+    results.cp={mass,numAnodes,pass:cpr<1};addHistory('CP Anode',mass.toFixed(0)+' kg, '+numAnodes+' pcs',cpr<1);updateKPI('cp',mass.toFixed(0),cpr<1);
+    const years=Array.from({length:life+1},(_,i)=>i),remaining=years.map(y=>mass*(1-y/life));
+    Plotly.newPlot('cpChart',[{x:years,y:remaining,type:'scatter',fill:'tozeroy',line:{color:'#3b82f6'}}],{...plotLayout,xaxis:{...plotLayout.xaxis,title:'Years'},yaxis:{...plotLayout.yaxis,title:'Mass (kg)'}},plotConfig);
+}
+
+// Corrosion
+function calcCor(){
+    const OD=+document.getElementById('cor_od').value,wt=+document.getElementById('cor_wt').value,d=+document.getElementById('cor_d').value,L=+document.getElementById('cor_l').value;
+    const pd=+document.getElementById('cor_pd').value,SMTS=+document.getElementById('cor_smts').value,t=wt-3,gm=0.77,gd=1.12,fu=0.72;
+    const dstar=d*gd,ldt=L/Math.sqrt(OD*t),Q=Math.sqrt(1+0.31*ldt*ldt);
+    let pcorr=gm*2*t*fu*SMTS/(OD-t)*(1-dstar/t)/(1-dstar/t/Q);if(dstar/t>=1)pcorr=0;
+    const erf=pd/pcorr;
+
+    document.getElementById('cor_dstar').textContent=dstar.toFixed(2)+' mm';document.getElementById('cor_q').textContent=Q.toFixed(3);
+    document.getElementById('cor_pcorr').textContent=pcorr.toFixed(2)+' MPa';document.getElementById('cor_erf').textContent=erf.toFixed(3);
+    document.getElementById('cor_stat').textContent=erf<1?'PASS':'FAIL';document.getElementById('cor_stat').className='status '+(erf<1?'pass':'fail');
+
+    results.cor={erf,pass:erf<1};addHistory('Corrosion','ERF: '+erf.toFixed(3),erf<1);updateKPI('cor',erf.toFixed(3),erf<1);drawDefect(OD,wt,d,L);
+}
+function drawDefect(OD,wt,d,L){const c=document.getElementById('defectCanvas'),ctx=c.getContext('2d');ctx.clearRect(0,0,320,200);ctx.fillStyle='#475569';ctx.fillRect(30,60,260,50);ctx.fillStyle='#ef4444';ctx.fillRect(120,60,Math.min(L/3,80),d/wt*35);ctx.fillStyle='#94a3b8';ctx.font='11px Inter';ctx.fillText('WT: '+wt+'mm',30,140);ctx.fillText('Defect: '+d+'mm x '+L+'mm',30,160);ctx.fillText('d/t: '+(d/wt*100).toFixed(1)+'%',30,180);}
+
+// Stability - DNV-RP-F109 compliant
+function calcOBS(){
+    const OD=+document.getElementById('obs_od').value/1000,WT=+document.getElementById('obs_wt').value/1000,tcon=+document.getElementById('obs_tcon').value/1000,rhocont=+document.getElementById('obs_rhocont').value;
+    const WD=+document.getElementById('obs_wd').value,Hs=+document.getElementById('obs_hs').value,Tp=+document.getElementById('obs_tp').value,Vc=+document.getElementById('obs_vc').value,mu=+document.getElementById('obs_mu').value;
+    const rhow=1025,g=9.81,ID=OD-2*WT,Dtot=OD+0.006+2*tcon;
+    const Ast=Math.PI/4*(OD*OD-ID*ID),Acon=Math.PI/4*(Dtot*Dtot-(OD+0.006)**2),Abore=Math.PI/4*ID*ID;
+    const Mst=Ast*7850,Mcon=Acon*3040,Mcont=Abore*rhocont,Mdry=Mst+Mcon+Mcont;
+    const Buoy=Math.PI/4*Dtot*Dtot*rhow*g,Ws=Mdry*g-Buoy;
+    // Wave number - iterative dispersion relation solution (accurate for all depths)
+    const w=2*Math.PI/Tp;
+    let L0=g*Tp*Tp/(2*Math.PI),L=L0;
+    for(let i=0;i<20;i++){L=L0*Math.tanh(2*Math.PI*WD/L);}
+    const k=2*Math.PI/L;
+    // Seabed wave velocity using linear wave theory
+    const Uw=Math.PI*Hs/(Tp*Math.sinh(k*WD)),Cd=0.7,Cl=0.9,Cm=3.29,U=Uw+Vc;
+    const Fd=0.5*rhow*Dtot*Cd*U*Math.abs(U),Fl=0.5*rhow*Dtot*Cl*U*U,Fi=Math.PI/4*Dtot*Dtot*rhow*Cm*Uw*w;
+    const Fy=Fd+Fi,Fr=mu*(Ws-Fl),UC=Fy/Math.max(Fr,0.001);
+
+    document.getElementById('obs_dtot').textContent=Dtot.toFixed(4)+' m';document.getElementById('obs_ws').textContent=Ws.toFixed(1)+' N/m';
+    document.getElementById('obs_fd').textContent=Fd.toFixed(1)+' N/m';document.getElementById('obs_fl').textContent=Fl.toFixed(1)+' N/m';document.getElementById('obs_fi').textContent=Fi.toFixed(1)+' N/m';
+    document.getElementById('obs_uc').textContent=UC.toFixed(3);document.getElementById('obs_stat').textContent=UC<=1?'STABLE':'UNSTABLE';document.getElementById('obs_stat').className='status '+(UC<=1?'pass':'fail');
+
+    results.obs={UC,pass:UC<=1};addHistory('Stability','UC: '+UC.toFixed(3),UC<=1);updateKPI('obs',UC.toFixed(3),UC<=1);
+    Plotly.newPlot('obsChart',[{values:[Math.abs(Fd),Math.abs(Fl),Math.abs(Fi)],labels:['Drag','Lift','Inertia'],type:'pie',marker:{colors:['#3b82f6','#10b981','#8b5cf6']},textfont:{color:'#f1f5f9'}}],{...plotLayout,showlegend:true,legend:{font:{color:'#94a3b8'}}},plotConfig);
+}
+
+// Expansion - DNV-RP-F110 anchor length method
+function calcExp(){
+    const OD=+document.getElementById('exp_od').value,WT=+document.getElementById('exp_wt').value,L=+document.getElementById('exp_l').value;
+    const Top=+document.getElementById('exp_top').value,Tlay=+document.getElementById('exp_tlay').value,Pi=+document.getElementById('exp_pi').value;
+    const E=207000,v=0.3,alpha=1.17e-5,SMYS=450,CA=3,t=WT-CA,Di=OD-2*WT,dT=Top-Tlay;
+    // Cross-sectional areas (m²)
+    const A=Math.PI/4*((OD/1000)**2-(Di/1000)**2),Ai=Math.PI/4*(Di/1000)**2;
+    const Dtot=(OD+50)/1000; // Total OD with coating (assume 50mm coating)
+    // Strains
+    const eth=alpha*dT; // Thermal strain
+    const eh=Pi*Di/(2*E*t); // Hoop strain
+    const eb=v*eh; // Bourdon (Poisson) effect
+    // Force calculations (N)
+    const E_Pa=E*1e6; // Convert to Pa
+    const Fth=E_Pa*A*alpha*dT; // Thermal force (compression)
+    const Fendcap=Pi*1e6*Ai; // End cap force (tension)
+    const Fpoisson=2*v*Pi*1e6*Ai; // Poisson effect
+    const Seff=Fth-Fendcap+Fpoisson; // Effective axial force
+    // Anchor length calculation (DNV-RP-F110)
+    const fax=1500; // Axial friction N/m² (typical sand)
+    const Lva=Math.abs(Seff)/(fax*Math.PI*Dtot);
+    const LvaEff=Math.min(Lva,L/2); // Limited by pipeline length
+    // End expansion using anchor length method
+    const delta=Math.abs(Seff)*LvaEff/(2*E_Pa*A)*1000; // in mm
+    // Utilization ratio
+    const sax=Math.abs(Seff)/(A*1e6),UR=sax/SMYS;
+
+    document.getElementById('exp_dt').textContent=dT.toFixed(1)+' C';document.getElementById('exp_eth').textContent=eth.toExponential(3);document.getElementById('exp_eb').textContent=eb.toExponential(3);
+    document.getElementById('exp_delta').textContent=delta.toFixed(1)+' mm';document.getElementById('exp_lva').textContent=LvaEff.toFixed(1)+' m';document.getElementById('exp_ur').textContent=UR.toFixed(3);
+
+    results.exp={delta,UR,pass:UR<1};addHistory('Expansion','Delta: '+delta.toFixed(1)+' mm',UR<1);updateKPI('exp',delta.toFixed(1),UR<1);
+    const temps=Array.from({length:10},(_,i)=>Tlay+i*dT/9),exps=temps.map(temp=>{const dt=temp-Tlay;const Ft=E_Pa*A*alpha*dt;const Se=Ft-Fendcap+Fpoisson;const Lv=Math.min(Math.abs(Se)/(fax*Math.PI*Dtot),L/2);return Math.abs(Se)*Lv/(2*E_Pa*A)*1000;});
+    Plotly.newPlot('expChart',[{x:temps,y:exps,type:'scatter',mode:'lines+markers',line:{color:'#3b82f6'},marker:{color:'#3b82f6'}}],{...plotLayout,xaxis:{...plotLayout.xaxis,title:'Temp (C)'},yaxis:{...plotLayout.yaxis,title:'Expansion (mm)'}},plotConfig);
+}
+
+// Monte Carlo
+function runMonteCarlo(){
+    const iter=+document.getElementById('mc_iter').value,pMean=+document.getElementById('mc_p_mean').value,pStd=+document.getElementById('mc_p_std').value;
+    const wtMean=+document.getElementById('mc_wt_mean').value,wtStd=+document.getElementById('mc_wt_std').value,OD=323.9,SMYS=450;
+    function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+    const res=[];for(let i=0;i<iter;i++){const P=pMean+randn()*pStd,WT=wtMean+randn()*wtStd;res.push(P*OD/(2*WT)/SMYS);}
+    res.sort((a,b)=>a-b);
+    const mean=res.reduce((a,b)=>a+b)/iter,std=Math.sqrt(res.map(x=>(x-mean)**2).reduce((a,b)=>a+b)/iter);
+    const p5=res[Math.floor(iter*0.05)],p95=res[Math.floor(iter*0.95)],pof=res.filter(x=>x>1).length/iter*100;
+
+    document.getElementById('mc_mean').textContent=mean.toFixed(3);document.getElementById('mc_std').textContent=std.toFixed(3);
+    document.getElementById('mc_p5').textContent=p5.toFixed(3);document.getElementById('mc_p95').textContent=p95.toFixed(3);document.getElementById('mc_pof').textContent=pof.toFixed(2)+'%';
+
+    Plotly.newPlot('mcChart',[{x:res,type:'histogram',nbinsx:30,marker:{color:'#3b82f6'}}],{...plotLayout,shapes:[{type:'line',x0:1,x1:1,y0:0,y1:1,yref:'paper',line:{color:'#ef4444',width:2,dash:'dash'}}],xaxis:{...plotLayout.xaxis,title:'Utilization'},yaxis:{...plotLayout.yaxis,title:'Frequency'}},plotConfig);
+    addHistory('Monte Carlo','P(Fail): '+pof.toFixed(2)+'%',pof<5);
+}
+
+// Dashboard
+function updateKPI(id,val,pass){
+    document.getElementById('kpi-'+id+'-value').innerHTML=val+'<span class="kpi-unit">'+(id==='wt'?' mm':id==='cp'?' kg':id==='exp'?' mm':'')+'</span>';
+    const s=document.getElementById('kpi-'+id+'-status');s.className='kpi-status '+(pass?'pass':'fail');
+}
+function addHistory(calc,result,pass){
+    history.unshift({time:new Date().toLocaleTimeString(),calc,result,pass});if(history.length>15)history.pop();renderHistory();
+}
+function renderHistory(){
+    document.getElementById('historyList').innerHTML=history.map(h=>`<div class="result-row"><span><span class="status ${h.pass?'pass':'fail'}" style="padding:2px 6px;font-size:9px;"></span> <strong>${h.calc}</strong> <span class="text-muted text-sm">${h.result}</span></span><span class="text-muted text-sm">${h.time}</span></div>`).join('');
+}
+function updateDashboard(){
+    const pass=Object.values(results).filter(r=>r&&r.pass).length,fail=Object.values(results).filter(r=>r&&!r.pass).length,pend=6-pass-fail;
+    Plotly.newPlot('dashChart',[{values:[pass,fail,pend],labels:['Pass','Fail','Pending'],type:'pie',marker:{colors:['#10b981','#ef4444','#475569']},textfont:{color:'#f1f5f9'},hole:0.5}],{...plotLayout,showlegend:true,legend:{font:{color:'#94a3b8'}},annotations:[{text:pass+'/6',font:{size:24,color:'#f1f5f9'},showarrow:false}]},plotConfig);
+}
+
+// Export
+function exportPDF(){
+    const{jsPDF}=window.jspdf;const doc=new jsPDF();
+    doc.setFontSize(18);doc.text('Pipeline Engineering Report',20,20);doc.setFontSize(10);doc.text('Generated: '+new Date().toLocaleString(),20,30);
+    let y=50;Object.entries(results).forEach(([k,v])=>{if(v){doc.setFontSize(12);doc.text(k.toUpperCase(),20,y);y+=8;doc.setFontSize(10);Object.entries(v).forEach(([k2,v2])=>{if(typeof v2==='number'){doc.text(k2+': '+v2.toFixed(3),25,y);y+=6;}});y+=8;}});
+    doc.save('pipeline-report.pdf');
+}
+function saveProject(){localStorage.setItem('pipelineProject',JSON.stringify({results,timestamp:new Date().toISOString()}));alert('Project saved!');}
+
+document.addEventListener('DOMContentLoaded',updateDashboard);
+</script>
 </body>
 </html>
