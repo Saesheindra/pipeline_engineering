@@ -933,34 +933,76 @@ select.input { cursor: pointer; }
                 </div>
             </div>
 
-            <!-- CP Anode Panel -->
+            <!-- CP Anode Panel - Enhanced DNV-RP-F103 -->
             <div class="panel" id="panel-cp">
                 <div class="grid-3">
                     <div class="card">
                         <div class="card-header"><div class="card-title">Pipeline Data</div></div>
                         <div class="card-body">
-                            <div class="form-group"><label class="form-label">Condition</label><select class="input" id="cp_cond"><option value="1">Buried</option><option value="2" selected>Unburied</option></select></div>
+                            <div class="form-group"><label class="form-label">Condition</label><select class="input" id="cp_cond"><option value="1">Buried</option><option value="2" selected>Unburied (Seawater)</option></select></div>
                             <div class="form-row">
-                                <div class="form-group"><label class="form-label">Design Life</label><div class="input-group"><input type="number" class="input" id="cp_life" value="15"><span class="input-suffix">yrs</span></div></div>
+                                <div class="form-group"><label class="form-label">Design Life</label><div class="input-group"><input type="number" class="input" id="cp_life" value="25"><span class="input-suffix">yrs</span></div></div>
                                 <div class="form-group"><label class="form-label">Segment Length</label><div class="input-group"><input type="number" class="input" id="cp_len" value="7492"><span class="input-suffix">m</span></div></div>
                             </div>
-                            <div class="form-group"><label class="form-label">Pipe OD</label><div class="input-group"><input type="number" class="input" id="cp_od" value="406.4"><span class="input-suffix">mm</span></div></div>
-                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcCP()">Calculate CP Requirements</button>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Pipe OD</label><div class="input-group"><input type="number" class="input" id="cp_od" value="406.4"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Temperature</label><div class="input-group"><input type="number" class="input" id="cp_temp" value="40"><span class="input-suffix">°C</span></div></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Coating Type</label>
+                                <select class="input" id="cp_coat">
+                                    <option value="1">FBE Only (a=-1.6, b=0.05)</option>
+                                    <option value="2" selected>FBE+CWC (a=-2.0, b=0.03)</option>
+                                    <option value="3">3LPE (a=-2.5, b=0.02)</option>
+                                    <option value="4">Polypropylene (a=-2.2, b=0.025)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="card">
-                        <div class="card-header"><div class="card-title">Results</div></div>
+                        <div class="card-header"><div class="card-title">Anode Properties</div></div>
                         <div class="card-body">
-                            <div class="result-row"><span class="result-label">Surface Area</span><span class="result-value text-mono" id="cp_area">-- m2</span></div>
-                            <div class="result-row"><span class="result-label">Current Demand</span><span class="result-value text-mono" id="cp_icdem">-- A</span></div>
+                            <div class="form-group">
+                                <label class="form-label">Anode Material</label>
+                                <select class="input" id="cp_mat">
+                                    <option value="1" selected>Al-Zn-In (2000 Ah/kg)</option>
+                                    <option value="2">Zinc (780 Ah/kg)</option>
+                                    <option value="3">Mg (1100 Ah/kg)</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Anode Length</label><div class="input-group"><input type="number" class="input" id="cp_al" value="1.5"><span class="input-suffix">m</span></div></div>
+                                <div class="form-group"><label class="form-label">Anode Width</label><div class="input-group"><input type="number" class="input" id="cp_aw" value="0.15"><span class="input-suffix">m</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Resistivity ρ</label><div class="input-group"><input type="number" class="input" id="cp_rho" value="0.25" step="0.01"><span class="input-suffix">Ω·m</span></div></div>
+                                <div class="form-group"><label class="form-label">Utilization</label><div class="input-group"><input type="number" class="input" id="cp_util" value="0.85" step="0.05"><span class="input-suffix">-</span></div></div>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcCP()">Calculate CP Design</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">CP Design Results</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Surface Area</span><span class="result-value text-mono" id="cp_area">-- m²</span></div>
+                            <div class="result-row"><span class="result-label">Current Demand (mean)</span><span class="result-value text-mono" id="cp_icdem">-- A</span></div>
+                            <div class="result-row"><span class="result-label">Anode Resistance</span><span class="result-value text-mono" id="cp_ra">-- Ω</span></div>
+                            <div class="result-row"><span class="result-label">Driving Voltage</span><span class="result-value text-mono" id="cp_dv">-- mV</span></div>
                             <div class="result-row result-highlight"><span class="result-label">Anode Mass Required</span><span class="result-value text-mono" style="font-size:18px;" id="cp_mass">-- kg</span></div>
                             <div class="result-row"><span class="result-label">Number of Anodes</span><span class="result-value text-mono" id="cp_num">-- pcs</span></div>
-                            <div class="result-row result-highlight"><span class="result-label">SSCC Check (CPR)</span><span><span class="result-value text-mono" id="cp_cpr">--</span> <span class="status" id="cp_cpr_stat">--</span></span></div>
+                            <div class="result-row"><span class="result-label">Anode Spacing</span><span class="result-value text-mono" id="cp_spacing">-- m</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Current Output Check</span><span class="status" id="cp_cpr_stat">--</span></div>
                         </div>
                     </div>
+                </div>
+                <div class="grid-2 mt-4">
                     <div class="card">
-                        <div class="card-header"><div class="card-title">Anode Depletion</div></div>
+                        <div class="card-header"><div class="card-title">Anode Mass Depletion</div></div>
                         <div class="card-body"><div id="cpChart" class="chart-container"></div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Current Demand Over Time</div></div>
+                        <div class="card-body"><div id="cpCurrentChart" class="chart-container"></div></div>
                     </div>
                 </div>
             </div>
@@ -1502,33 +1544,93 @@ function calcFS(){
     Plotly.newPlot('fsSpanChart',[{x:spans,y:allowIL,name:'IL Ratio',type:'scatter',line:{color:'#3b82f6'}},{x:spans,y:allowCF,name:'CF Ratio',type:'scatter',line:{color:'#10b981'}}],{...plotLayout,shapes:[{type:'line',y0:1,y1:1,x0:2,x1:40,line:{color:'#ef4444',dash:'dash'}}],xaxis:{...plotLayout.xaxis,title:'Span (m)'},yaxis:{...plotLayout.yaxis,title:'VIV Ratio'}},plotConfig);
 }
 
-// CP Anode - DNV-RP-F103 compliant
+// CP Anode - Enhanced DNV-RP-F103 with resistance, spacing, temperature
 function calcCP(){
-    const cond=+document.getElementById('cp_cond').value,life=+document.getElementById('cp_life').value,len=+document.getElementById('cp_len').value,OD=+document.getElementById('cp_od').value;
-    // Surface area calculation
+    const cond=+document.getElementById('cp_cond').value,life=+document.getElementById('cp_life').value;
+    const len=+document.getElementById('cp_len').value,OD=+document.getElementById('cp_od').value;
+    const temp=+document.getElementById('cp_temp').value,coatType=+document.getElementById('cp_coat').value;
+    const anodeMat=+document.getElementById('cp_mat').value;
+    const aL=+document.getElementById('cp_al').value,aW=+document.getElementById('cp_aw').value;
+    const rho=+document.getElementById('cp_rho').value,util=+document.getElementById('cp_util').value;
+
+    // Surface area
     const area=Math.PI*OD/1000*len;
-    // Coating breakdown per DNV-RP-F103: fc = 10^a + b*t (FBE+CWC: a=-2.0, b=0.03)
-    const fc_initial=Math.pow(10,-2.0),fc_final=Math.pow(10,-2.0)+0.03*life,fc_mean=(fc_initial+fc_final)/2;
-    // Current density: buried=20mA/m², unburied=100mA/m² (mean values)
+
+    // Coating breakdown factors [a, b] per DNV-RP-F103
+    const coatParams=[[-1.6,0.05],[-2.0,0.03],[-2.5,0.02],[-2.2,0.025]][coatType-1];
+    const fc_initial=Math.pow(10,coatParams[0]);
+    const fc_final=Math.pow(10,coatParams[0])+coatParams[1]*life;
+    const fc_mean=(fc_initial+fc_final)/2;
+
+    // Current density: buried=20, unburied=100 mA/m²
     const ic_base=cond==1?20:100;
-    // Condition factor: buried=1, unburied already has higher ic
-    const condFactor=1.0;
-    // Current demand (A)
-    const Icdem=area*fc_mean*ic_base*condFactor/1000;
-    // Anode mass: M = I*t*8760/(u*C), where u=0.85, C=2000 A·h/kg for Al
-    const utilization=0.85,capacity=2000;
-    const mass=(Icdem*life*8760)/(capacity*utilization);
-    const numAnodes=Math.ceil(mass/150);
-    // CPR check: current density should be < 50 mA/m² to avoid SSCC
-    const currentDensity=Icdem*1000/area,cpr=currentDensity/50;
 
-    document.getElementById('cp_area').textContent=area.toFixed(0)+' m2';document.getElementById('cp_icdem').textContent=Icdem.toFixed(2)+' A';
-    document.getElementById('cp_mass').textContent=mass.toFixed(0)+' kg';document.getElementById('cp_num').textContent=numAnodes+' pcs';
-    document.getElementById('cp_cpr').textContent=cpr.toFixed(3);document.getElementById('cp_cpr_stat').textContent=cpr<1?'PASS':'FAIL';document.getElementById('cp_cpr_stat').className='status '+(cpr<1?'pass':'fail');
+    // Temperature derating (5% per 10°C above 25°C)
+    const tempFactor=temp>25?1+0.005*(temp-25):1.0;
 
-    results.cp={mass,numAnodes,pass:cpr<1};addHistory('CP Anode',mass.toFixed(0)+' kg, '+numAnodes+' pcs',cpr<1);updateKPI('cp',mass.toFixed(0),cpr<1);
-    const years=Array.from({length:life+1},(_,i)=>i),remaining=years.map(y=>mass*(1-y/life));
+    // Current demand
+    const Icdem=area*fc_mean*ic_base*tempFactor/1000;
+
+    // Anode material properties [capacity Ah/kg, potential V]
+    const anodeProps=[[2000,-1.05],[780,-1.00],[1100,-1.55]][anodeMat-1];
+    const capacity=anodeProps[0],anodePot=anodeProps[1];
+
+    // Temperature derating of anode capacity
+    const capacityDerated=capacity*(1-0.001*Math.max(0,temp-25));
+
+    // Anode mass required
+    const mass=(Icdem*life*8760)/(capacityDerated*util);
+
+    // Anode resistance (McCoy's formula for bracelet)
+    const r=Math.sqrt(aL*aW/Math.PI);  // Equivalent radius
+    const Ra=rho/(2*Math.PI*aL)*(Math.log(4*aL/r)-1);
+
+    // Driving voltage (anode to protected steel)
+    const steelPot=-0.80;  // Protected steel potential
+    const drivingV=(anodePot-steelPot)*1000;  // mV
+
+    // Current output per anode
+    const Ia=drivingV/1000/Ra;  // Amps per anode
+
+    // Number of anodes (by mass)
+    const anodeMass=2700*aL*aW*0.05;  // Assume 50mm thick, 2700 kg/m³
+    const numByMass=Math.ceil(mass/anodeMass);
+
+    // Number of anodes (by current)
+    const numByCurrent=Math.ceil(Icdem/Ia);
+
+    // Governing number
+    const numAnodes=Math.max(numByMass,numByCurrent);
+
+    // Spacing
+    const spacing=len/numAnodes;
+
+    // Output check
+    const totalOutput=numAnodes*Ia;
+    const outputPass=totalOutput>=Icdem;
+
+    document.getElementById('cp_area').textContent=area.toFixed(0)+' m²';
+    document.getElementById('cp_icdem').textContent=Icdem.toFixed(2)+' A';
+    document.getElementById('cp_ra').textContent=Ra.toFixed(4)+' Ω';
+    document.getElementById('cp_dv').textContent=drivingV.toFixed(0)+' mV';
+    document.getElementById('cp_mass').textContent=mass.toFixed(0)+' kg';
+    document.getElementById('cp_num').textContent=numAnodes+' pcs';
+    document.getElementById('cp_spacing').textContent=spacing.toFixed(0)+' m';
+    document.getElementById('cp_cpr_stat').textContent=outputPass?'ADEQUATE':'INSUFFICIENT';
+    document.getElementById('cp_cpr_stat').className='status '+(outputPass?'pass':'fail');
+
+    results.cp={mass,numAnodes,pass:outputPass};
+    addHistory('CP Anode',mass.toFixed(0)+' kg, '+numAnodes+' pcs',outputPass);
+    updateKPI('cp',mass.toFixed(0),outputPass);
+
+    // Mass depletion chart
+    const years=Array.from({length:life+1},(_,i)=>i);
+    const remaining=years.map(y=>mass*(1-y/life));
     Plotly.newPlot('cpChart',[{x:years,y:remaining,type:'scatter',fill:'tozeroy',line:{color:'#3b82f6'}}],{...plotLayout,xaxis:{...plotLayout.xaxis,title:'Years'},yaxis:{...plotLayout.yaxis,title:'Mass (kg)'}},plotConfig);
+
+    // Current demand over time chart
+    const demands=years.map(y=>{const fc=Math.pow(10,coatParams[0])+coatParams[1]*y;return area*fc*ic_base*tempFactor/1000;});
+    Plotly.newPlot('cpCurrentChart',[{x:years,y:demands,type:'scatter',mode:'lines',line:{color:'#10b981'},name:'Demand'},{x:years,y:years.map(()=>totalOutput),type:'scatter',mode:'lines',line:{color:'#ef4444',dash:'dash'},name:'Capacity'}],{...plotLayout,xaxis:{...plotLayout.xaxis,title:'Years'},yaxis:{...plotLayout.yaxis,title:'Current (A)'}},plotConfig);
 }
 
 // Corrosion
