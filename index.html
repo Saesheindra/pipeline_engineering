@@ -495,6 +495,20 @@ select.input { cursor: pointer; }
                 <span class="nav-text">Expansion</span>
             </div>
 
+            <div class="nav-label">Advanced</div>
+            <div class="nav-item" onclick="showPanel('ub')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2v6m0 8v6M4 12h4m8 0h4"/><circle cx="12" cy="12" r="3"/></svg></span>
+                <span class="nav-text">Upheaval Buckling</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('lb')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                <span class="nav-text">Lateral Buckling</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('ht')">
+                <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M6.34 6.34l2.83 2.83m5.66 5.66l2.83 2.83M2 12h4m12 0h4"/></svg></span>
+                <span class="nav-text">Hydrotest</span>
+            </div>
+
             <div class="nav-label">Analysis</div>
             <div class="nav-item" onclick="showPanel('mc')">
                 <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><circle cx="17" cy="17" r="3"/></svg></span>
@@ -995,6 +1009,193 @@ select.input { cursor: pointer; }
                 </div>
             </div>
 
+            <!-- Upheaval Buckling Panel -->
+            <div class="panel" id="panel-ub">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Pipeline Properties</div></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">OD</label><div class="input-group"><input type="number" class="input" id="ub_od" value="323.9"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Wall Thickness</label><div class="input-group"><input type="number" class="input" id="ub_wt" value="15.9"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Coating Thk</label><div class="input-group"><input type="number" class="input" id="ub_tc" value="5"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Cover Depth</label><div class="input-group"><input type="number" class="input" id="ub_cover" value="1.0"><span class="input-suffix">m</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Op. Pressure</label><div class="input-group"><input type="number" class="input" id="ub_p" value="15"><span class="input-suffix">MPa</span></div></div>
+                                <div class="form-group"><label class="form-label">Temp Rise</label><div class="input-group"><input type="number" class="input" id="ub_dt" value="60"><span class="input-suffix">°C</span></div></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Residual Lay Tension</label><div class="input-group"><input type="number" class="input" id="ub_h0" value="50"><span class="input-suffix">kN</span></div></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Soil Properties</div></div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Soil Type</label>
+                                <select class="input" id="ub_soil">
+                                    <option value="1">Sand - Loose</option>
+                                    <option value="2" selected>Sand - Medium Dense</option>
+                                    <option value="3">Sand - Dense</option>
+                                    <option value="4">Clay - Soft</option>
+                                    <option value="5">Clay - Stiff</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Submerged Weight</label><div class="input-group"><input type="number" class="input" id="ub_gamma" value="10"><span class="input-suffix">kN/m³</span></div></div>
+                                <div class="form-group"><label class="form-label">Friction Angle</label><div class="input-group"><input type="number" class="input" id="ub_phi" value="35"><span class="input-suffix">°</span></div></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Uplift Factor (f)</label><div class="input-group"><input type="number" class="input" id="ub_f" value="0.5" step="0.1"><span class="input-suffix">-</span></div></div>
+                            <div class="form-group"><label class="form-label">Imperfection Height</label><div class="input-group"><input type="number" class="input" id="ub_imp" value="0.1"><span class="input-suffix">m</span></div></div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcUB()">Calculate Upheaval</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Upheaval Buckling Results</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Effective Axial Force</span><span class="result-value text-mono" id="ub_seff">-- kN</span></div>
+                            <div class="result-row"><span class="result-label">Pipe Weight (Subm)</span><span class="result-value text-mono" id="ub_ws">-- N/m</span></div>
+                            <div class="result-row"><span class="result-label">Soil Uplift Resistance</span><span class="result-value text-mono" id="ub_qup">-- N/m</span></div>
+                            <div class="result-row"><span class="result-label">Download Force Req'd</span><span class="result-value text-mono" id="ub_req">-- N/m</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Min Cover Required</span><span class="result-value text-mono" style="font-size:20px;" id="ub_mincover">-- m</span></div>
+                            <div class="result-row"><span class="result-label">Safety Factor</span><span class="result-value text-mono" id="ub_sf">--</span></div>
+                            <div class="result-row"><span class="result-label">Status</span><span class="status" id="ub_stat">--</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-4">
+                    <div class="card-header"><div class="card-title">Cover Depth vs Safety Factor</div></div>
+                    <div class="card-body"><div id="ubChart" class="chart-container"></div></div>
+                </div>
+            </div>
+
+            <!-- Lateral Buckling Panel -->
+            <div class="panel" id="panel-lb">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Pipeline Properties</div></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">OD</label><div class="input-group"><input type="number" class="input" id="lb_od" value="323.9"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Wall Thickness</label><div class="input-group"><input type="number" class="input" id="lb_wt" value="15.9"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">SMYS</label><div class="input-group"><input type="number" class="input" id="lb_smys" value="450"><span class="input-suffix">MPa</span></div></div>
+                                <div class="form-group"><label class="form-label">SMTS</label><div class="input-group"><input type="number" class="input" id="lb_smts" value="535"><span class="input-suffix">MPa</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Op. Pressure</label><div class="input-group"><input type="number" class="input" id="lb_p" value="20"><span class="input-suffix">MPa</span></div></div>
+                                <div class="form-group"><label class="form-label">Temp Rise</label><div class="input-group"><input type="number" class="input" id="lb_dt" value="80"><span class="input-suffix">°C</span></div></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Pipeline Length</label><div class="input-group"><input type="number" class="input" id="lb_len" value="5000"><span class="input-suffix">m</span></div></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Friction & Environment</div></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Axial Friction μ_a</label><div class="input-group"><input type="number" class="input" id="lb_mua" value="0.5" step="0.1"><span class="input-suffix">-</span></div></div>
+                                <div class="form-group"><label class="form-label">Lateral Friction μ_l</label><div class="input-group"><input type="number" class="input" id="lb_mul" value="0.7" step="0.1"><span class="input-suffix">-</span></div></div>
+                            </div>
+                            <div class="form-group"><label class="form-label">Submerged Weight</label><div class="input-group"><input type="number" class="input" id="lb_ws" value="1500"><span class="input-suffix">N/m</span></div></div>
+                            <div class="form-group"><label class="form-label">Initial Imperfection</label><div class="input-group"><input type="number" class="input" id="lb_imp" value="0.2"><span class="input-suffix">m</span></div></div>
+                            <div class="form-group">
+                                <label class="form-label">Buckling Mode</label>
+                                <select class="input" id="lb_mode">
+                                    <option value="1">Mode 1 - Single Lobe</option>
+                                    <option value="2">Mode 2 - Double Lobe</option>
+                                    <option value="3" selected>Mode 3 - Snake</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcLB()">Calculate Lateral Buckling</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Lateral Buckling Results</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Effective Axial Force</span><span class="result-value text-mono" id="lb_seff">-- MN</span></div>
+                            <div class="result-row"><span class="result-label">Critical Buckling Force</span><span class="result-value text-mono" id="lb_pcr">-- MN</span></div>
+                            <div class="result-row"><span class="result-label">Buckle Amplitude</span><span class="result-value text-mono" id="lb_amp">-- m</span></div>
+                            <div class="result-row"><span class="result-label">Feed-In Length</span><span class="result-value text-mono" id="lb_feed">-- m</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Max Bending Strain</span><span class="result-value text-mono" style="font-size:20px;" id="lb_strain">-- %</span></div>
+                            <div class="result-row"><span class="result-label">Strain Capacity</span><span class="result-value text-mono" id="lb_cap">-- %</span></div>
+                            <div class="result-row"><span class="result-label">Utilization</span><span class="result-value text-mono" id="lb_uc">--</span></div>
+                            <div class="result-row"><span class="result-label">Status</span><span class="status" id="lb_stat">--</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-4">
+                    <div class="card-header"><div class="card-title">Buckle Shape & Strain Distribution</div></div>
+                    <div class="card-body"><div id="lbChart" class="chart-container"></div></div>
+                </div>
+            </div>
+
+            <!-- Hydrotest Panel -->
+            <div class="panel" id="panel-ht">
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Pipeline Data</div></div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">OD</label><div class="input-group"><input type="number" class="input" id="ht_od" value="323.9"><span class="input-suffix">mm</span></div></div>
+                                <div class="form-group"><label class="form-label">Wall Thickness</label><div class="input-group"><input type="number" class="input" id="ht_wt" value="15.9"><span class="input-suffix">mm</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">SMYS</label><div class="input-group"><input type="number" class="input" id="ht_smys" value="450"><span class="input-suffix">MPa</span></div></div>
+                                <div class="form-group"><label class="form-label">SMTS</label><div class="input-group"><input type="number" class="input" id="ht_smts" value="535"><span class="input-suffix">MPa</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">MAOP/Design P</label><div class="input-group"><input type="number" class="input" id="ht_maop" value="10"><span class="input-suffix">MPa</span></div></div>
+                                <div class="form-group"><label class="form-label">Pipeline Length</label><div class="input-group"><input type="number" class="input" id="ht_len" value="5000"><span class="input-suffix">m</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Test Parameters</div></div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Design Code</label>
+                                <select class="input" id="ht_code">
+                                    <option value="1">DNV-ST-F101 (1.25× + head)</option>
+                                    <option value="2" selected>ASME B31.8 (1.25× MAOP)</option>
+                                    <option value="3">ASME B31.4 (1.25× MAOP)</option>
+                                    <option value="4">API 1104 (1.4× MOP)</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Min Elevation</label><div class="input-group"><input type="number" class="input" id="ht_hmin" value="0"><span class="input-suffix">m</span></div></div>
+                                <div class="form-group"><label class="form-label">Max Elevation</label><div class="input-group"><input type="number" class="input" id="ht_hmax" value="50"><span class="input-suffix">m</span></div></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Test Temp</label><div class="input-group"><input type="number" class="input" id="ht_temp" value="20"><span class="input-suffix">°C</span></div></div>
+                                <div class="form-group"><label class="form-label">Hold Duration</label><div class="input-group"><input type="number" class="input" id="ht_dur" value="24"><span class="input-suffix">hrs</span></div></div>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcHT()">Calculate Test Pressure</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Hydrotest Results</div></div>
+                        <div class="card-body">
+                            <div class="result-row"><span class="result-label">Min Test Pressure</span><span class="result-value text-mono" id="ht_pmin">-- MPa</span></div>
+                            <div class="result-row"><span class="result-label">Static Head (max)</span><span class="result-value text-mono" id="ht_head">-- MPa</span></div>
+                            <div class="result-row result-highlight"><span class="result-label">Test Pressure at Low Pt</span><span class="result-value text-mono" style="font-size:20px;" id="ht_ptest">-- MPa</span></div>
+                            <div class="result-row"><span class="result-label">Hoop Stress at Test</span><span class="result-value text-mono" id="ht_hoop">-- MPa</span></div>
+                            <div class="result-row"><span class="result-label">% of SMYS</span><span class="result-value text-mono" id="ht_psmys">-- %</span></div>
+                            <div class="result-row"><span class="result-label">% of SMTS</span><span class="result-value text-mono" id="ht_psmts">-- %</span></div>
+                            <div class="result-row"><span class="result-label">Test Volume</span><span class="result-value text-mono" id="ht_vol">-- m³</span></div>
+                            <div class="result-row"><span class="result-label">Max Allowable (90% SMYS)</span><span class="result-value text-mono" id="ht_pmax">-- MPa</span></div>
+                            <div class="result-row"><span class="result-label">Status</span><span class="status" id="ht_stat">--</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-4">
+                    <div class="card-header"><div class="card-title">Pressure vs Elevation Profile</div></div>
+                    <div class="card-body"><div id="htChart" class="chart-container"></div></div>
+                </div>
+            </div>
+
             <!-- Monte Carlo Panel -->
             <div class="panel" id="panel-mc">
                 <div class="grid-3">
@@ -1048,7 +1249,7 @@ function showPanel(id){
     document.getElementById('panel-'+id).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     event.target.closest('.nav-item').classList.add('active');
-    const titles={dashboard:'Project Dashboard',wt:'Wall Thickness Calculator',fs:'Free Span Analysis',cp:'CP Anode Design',cor:'Corrosion Assessment',obs:'On-Bottom Stability',exp:'End Expansion',mc:'Monte Carlo Simulation'};
+    const titles={dashboard:'Project Dashboard',wt:'Wall Thickness Calculator',fs:'Free Span Analysis',cp:'CP Anode Design',cor:'Corrosion Assessment',obs:'On-Bottom Stability',exp:'End Expansion',ub:'Upheaval Buckling Analysis',lb:'Lateral Buckling Analysis',ht:'Hydrostatic Test Design',mc:'Monte Carlo Simulation'};
     document.getElementById('pageTitle').textContent=titles[id]||'Dashboard';
     if(id==='dashboard')updateDashboard();
 }
@@ -1240,6 +1441,175 @@ function runMonteCarlo(){
 
     Plotly.newPlot('mcChart',[{x:res,type:'histogram',nbinsx:30,marker:{color:'#3b82f6'}}],{...plotLayout,shapes:[{type:'line',x0:1,x1:1,y0:0,y1:1,yref:'paper',line:{color:'#ef4444',width:2,dash:'dash'}}],xaxis:{...plotLayout.xaxis,title:'Utilization'},yaxis:{...plotLayout.yaxis,title:'Frequency'}},plotConfig);
     addHistory('Monte Carlo','P(Fail): '+pof.toFixed(2)+'%',pof<5);
+}
+
+// Upheaval Buckling - DNV-RP-F110
+function calcUB(){
+    const OD=+document.getElementById('ub_od').value/1000,WT=+document.getElementById('ub_wt').value/1000,tc=+document.getElementById('ub_tc').value/1000;
+    const cover=+document.getElementById('ub_cover').value,P=+document.getElementById('ub_p').value,dT=+document.getElementById('ub_dt').value;
+    const H0=+document.getElementById('ub_h0').value*1000,gamma=+document.getElementById('ub_gamma').value*1000,phi=+document.getElementById('ub_phi').value*Math.PI/180;
+    const fup=+document.getElementById('ub_f').value,imp=+document.getElementById('ub_imp').value;
+
+    const E=207e9,alpha=1.17e-5,nu=0.3,rhoSteel=7850,rhoSea=1025,g=9.81;
+    const ID=OD-2*WT,Dtot=OD+2*tc,A=Math.PI/4*(OD*OD-ID*ID),I=Math.PI/64*(OD**4-ID**4),Ai=Math.PI/4*ID*ID;
+
+    // Submerged weight
+    const Ws=(A*rhoSteel+Math.PI/4*(Dtot*Dtot-OD*OD)*1300-Math.PI/4*Dtot*Dtot*rhoSea)*g;
+
+    // Effective axial force (fully restrained)
+    const Fth=E*A*alpha*dT;
+    const Fendcap=P*1e6*Ai*(1-2*nu);
+    const Seff=Fth+Fendcap-H0;
+
+    // Soil uplift resistance per Palmer & Baldry
+    const Hcover=cover+Dtot/2;
+    const qup=gamma*Hcover*Dtot*(1+fup*Hcover/Dtot);
+
+    // Required download force (simplified Hobbs formula)
+    const Lbuckle=4.49*Math.pow(E*I/Math.abs(Seff),0.25);
+    const wReq=Math.pow(Seff,2)/(81*E*I)*Math.pow(imp*1000,2)/1000;
+
+    // Safety factor
+    const SF=(Ws+qup)/Math.max(wReq,1);
+
+    // Minimum cover required for SF=1.5
+    let minCover=0.5;
+    for(let c=0.3;c<=3;c+=0.05){
+        const Hc=c+Dtot/2;
+        const qc=gamma*Hc*Dtot*(1+fup*Hc/Dtot);
+        const SFc=(Ws+qc)/Math.max(wReq,1);
+        if(SFc>=1.5){minCover=c;break;}
+    }
+
+    const pass=SF>=1.5;
+    document.getElementById('ub_seff').textContent=(Seff/1000).toFixed(0)+' kN';
+    document.getElementById('ub_ws').textContent=Ws.toFixed(1)+' N/m';
+    document.getElementById('ub_qup').textContent=qup.toFixed(1)+' N/m';
+    document.getElementById('ub_req').textContent=wReq.toFixed(1)+' N/m';
+    document.getElementById('ub_mincover').textContent=minCover.toFixed(2)+' m';
+    document.getElementById('ub_sf').textContent=SF.toFixed(2);
+    document.getElementById('ub_stat').textContent=pass?'STABLE':'UNSTABLE';
+    document.getElementById('ub_stat').className='status '+(pass?'pass':'fail');
+
+    // Plot SF vs cover depth
+    const covers=Array.from({length:30},(_,i)=>0.3+i*0.1);
+    const sfs=covers.map(c=>{const Hc=c+Dtot/2;const qc=gamma*Hc*Dtot*(1+fup*Hc/Dtot);return(Ws+qc)/Math.max(wReq,1);});
+    Plotly.newPlot('ubChart',[{x:covers,y:sfs,type:'scatter',mode:'lines',line:{color:'#3b82f6'},name:'Safety Factor'}],{...plotLayout,shapes:[{type:'line',y0:1.5,y1:1.5,x0:0.3,x1:3.3,line:{color:'#10b981',dash:'dash'}}],xaxis:{...plotLayout.xaxis,title:'Cover Depth (m)'},yaxis:{...plotLayout.yaxis,title:'Safety Factor'}},plotConfig);
+
+    results.ub={SF,pass};addHistory('Upheaval','SF: '+SF.toFixed(2),pass);
+}
+
+// Lateral Buckling - DNV-RP-F110 / Hobbs Analysis
+function calcLB(){
+    const OD=+document.getElementById('lb_od').value/1000,WT=+document.getElementById('lb_wt').value/1000;
+    const SMYS=+document.getElementById('lb_smys').value,SMTS=+document.getElementById('lb_smts').value;
+    const P=+document.getElementById('lb_p').value,dT=+document.getElementById('lb_dt').value,Lpipe=+document.getElementById('lb_len').value;
+    const mua=+document.getElementById('lb_mua').value,mul=+document.getElementById('lb_mul').value;
+    const Ws=+document.getElementById('lb_ws').value,imp=+document.getElementById('lb_imp').value,mode=+document.getElementById('lb_mode').value;
+
+    const E=207e9,alpha=1.17e-5,nu=0.3;
+    const ID=OD-2*WT,A=Math.PI/4*(OD*OD-ID*ID),I=Math.PI/64*(OD**4-ID**4),Ai=Math.PI/4*ID*ID;
+
+    // Effective axial force
+    const Fth=E*A*alpha*dT;
+    const Fendcap=P*1e6*Ai*(1-2*nu);
+    const Seff=Fth+Fendcap;
+
+    // Critical buckling force (Hobbs Mode 3)
+    const k1=[80.76,39.48,34.06][mode-1];const k2=[6.391,8.64,10.93][mode-1];
+    const Pcr=k1*Math.pow(E*I*mul*Ws,0.5);
+
+    // Post-buckle amplitude using energy method
+    const Lb=k2*Math.pow(E*I/(mul*Ws),0.25)*Math.pow(Seff/Pcr,0.5);
+    const amp=imp+0.5*Math.pow(Lb,2)*mul*Ws/(8*E*I)*1000;
+
+    // Feed-in length
+    const feedIn=Math.abs(Seff)/(mua*Ws);
+
+    // Bending strain at crown
+    const kappa=8*amp/1000/(Lb*Lb);
+    const strainBend=kappa*OD/2*100;
+
+    // Strain capacity (DNV OS-F101 simplified)
+    const Dt=OD/WT;
+    const strainCap=Math.min(0.78*Math.pow(WT/OD,1.5)*(SMTS/SMYS-0.01)*100,3.0);
+
+    const UC=strainBend/strainCap;
+    const pass=UC<=1.0;
+
+    document.getElementById('lb_seff').textContent=(Seff/1e6).toFixed(2)+' MN';
+    document.getElementById('lb_pcr').textContent=(Pcr/1e6).toFixed(2)+' MN';
+    document.getElementById('lb_amp').textContent=amp.toFixed(2)+' m';
+    document.getElementById('lb_feed').textContent=feedIn.toFixed(0)+' m';
+    document.getElementById('lb_strain').textContent=strainBend.toFixed(3)+' %';
+    document.getElementById('lb_cap').textContent=strainCap.toFixed(3)+' %';
+    document.getElementById('lb_uc').textContent=UC.toFixed(3);
+    document.getElementById('lb_stat').textContent=pass?'OK':'EXCEEDS';
+    document.getElementById('lb_stat').className='status '+(pass?'pass':'fail');
+
+    // Plot buckle shape
+    const xb=Array.from({length:100},(_,i)=>-Lb/2+i*Lb/99);
+    const yb=xb.map(x=>amp*Math.cos(Math.PI*x/Lb));
+    const strains=xb.map(x=>{const k=amp*(Math.PI/Lb)**2*Math.cos(Math.PI*x/Lb);return Math.abs(k*OD/2*100);});
+    Plotly.newPlot('lbChart',[{x:xb,y:yb,type:'scatter',mode:'lines',line:{color:'#3b82f6'},name:'Buckle Shape',yaxis:'y'},{x:xb,y:strains,type:'scatter',mode:'lines',line:{color:'#ef4444'},name:'Strain %',yaxis:'y2'}],{...plotLayout,yaxis:{...plotLayout.yaxis,title:'Amplitude (m)'},yaxis2:{overlaying:'y',side:'right',title:'Strain %',showgrid:false,color:'#ef4444'},xaxis:{...plotLayout.xaxis,title:'Distance (m)'}},plotConfig);
+
+    results.lb={UC,pass};addHistory('Lateral Buckle','UC: '+UC.toFixed(3),pass);
+}
+
+// Hydrostatic Test Calculator
+function calcHT(){
+    const OD=+document.getElementById('ht_od').value,WT=+document.getElementById('ht_wt').value;
+    const SMYS=+document.getElementById('ht_smys').value,SMTS=+document.getElementById('ht_smts').value;
+    const MAOP=+document.getElementById('ht_maop').value,Lpipe=+document.getElementById('ht_len').value;
+    const code=+document.getElementById('ht_code').value;
+    const hmin=+document.getElementById('ht_hmin').value,hmax=+document.getElementById('ht_hmax').value;
+    const testTemp=+document.getElementById('ht_temp').value,dur=+document.getElementById('ht_dur').value;
+
+    const rhoWater=1000,g=9.81;
+    const ID=OD-2*WT;
+
+    // Test pressure factor by code
+    const factors=[1.25,1.25,1.25,1.40];
+    const factor=factors[code-1];
+    const Pmin=MAOP*factor;
+
+    // Static head
+    const headDiff=hmax-hmin;
+    const Phead=rhoWater*g*headDiff/1e6;
+
+    // Test pressure at low point
+    const Ptest=Pmin+Phead;
+
+    // Hoop stress at test
+    const hoopStress=Ptest*OD/(2*WT);
+    const pctSMYS=hoopStress/SMYS*100;
+    const pctSMTS=hoopStress/SMTS*100;
+
+    // Maximum allowable (90% SMYS)
+    const Pmax=0.9*SMYS*2*WT/OD;
+
+    // Test volume
+    const volume=Math.PI/4*(ID/1000)**2*Lpipe;
+
+    const pass=Ptest<=Pmax&&pctSMYS<=95;
+
+    document.getElementById('ht_pmin').textContent=Pmin.toFixed(2)+' MPa';
+    document.getElementById('ht_head').textContent=Phead.toFixed(2)+' MPa';
+    document.getElementById('ht_ptest').textContent=Ptest.toFixed(2)+' MPa';
+    document.getElementById('ht_hoop').textContent=hoopStress.toFixed(1)+' MPa';
+    document.getElementById('ht_psmys').textContent=pctSMYS.toFixed(1)+' %';
+    document.getElementById('ht_psmts').textContent=pctSMTS.toFixed(1)+' %';
+    document.getElementById('ht_vol').textContent=volume.toFixed(1)+' m³';
+    document.getElementById('ht_pmax').textContent=Pmax.toFixed(2)+' MPa';
+    document.getElementById('ht_stat').textContent=pass?'ACCEPTABLE':'EXCEEDS LIMIT';
+    document.getElementById('ht_stat').className='status '+(pass?'pass':'fail');
+
+    // Plot pressure vs elevation
+    const elevs=Array.from({length:20},(_,i)=>hmin+i*(hmax-hmin)/19);
+    const pressures=elevs.map(h=>Pmin+rhoWater*g*(hmax-h)/1e6);
+    Plotly.newPlot('htChart',[{x:elevs,y:pressures,type:'scatter',mode:'lines+markers',line:{color:'#3b82f6'},name:'Test Pressure'}],{...plotLayout,shapes:[{type:'line',y0:Pmax,y1:Pmax,x0:hmin,x1:hmax,line:{color:'#ef4444',dash:'dash'}}],xaxis:{...plotLayout.xaxis,title:'Elevation (m)'},yaxis:{...plotLayout.yaxis,title:'Pressure (MPa)'}},plotConfig);
+
+    results.ht={Ptest,pass};addHistory('Hydrotest','P: '+Ptest.toFixed(1)+' MPa',pass);
 }
 
 // Dashboard
