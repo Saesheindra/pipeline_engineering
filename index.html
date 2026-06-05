@@ -855,41 +855,80 @@ select.input { cursor: pointer; }
                 </div>
             </div>
 
-            <!-- Free Span Panel -->
+            <!-- Free Span Panel - Enhanced DNV-RP-F105 -->
             <div class="panel" id="panel-fs">
                 <div class="grid-3">
                     <div class="card">
                         <div class="card-header"><div class="card-title">Span Geometry</div></div>
                         <div class="card-body">
                             <div class="form-row">
-                                <div class="form-group"><label class="form-label">Span IL</label><div class="input-group"><input type="number" class="input" id="fs_lil" value="6.5" step="0.1"><span class="input-suffix">m</span></div></div>
-                                <div class="form-group"><label class="form-label">Span CF</label><div class="input-group"><input type="number" class="input" id="fs_lcf" value="10" step="0.1"><span class="input-suffix">m</span></div></div>
+                                <div class="form-group"><label class="form-label">Span Length IL</label><div class="input-group"><input type="number" class="input" id="fs_lil" value="6.5" step="0.1"><span class="input-suffix">m</span></div></div>
+                                <div class="form-group"><label class="form-label">Span Length CF</label><div class="input-group"><input type="number" class="input" id="fs_lcf" value="10" step="0.1"><span class="input-suffix">m</span></div></div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group"><label class="form-label">Ext Diameter</label><div class="input-group"><input type="number" class="input" id="fs_de" value="168.3"><span class="input-suffix">mm</span></div></div>
                                 <div class="form-group"><label class="form-label">Wall Thickness</label><div class="input-group"><input type="number" class="input" id="fs_wt" value="9.53"><span class="input-suffix">mm</span></div></div>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label">Boundary Condition</label>
+                                <select class="input" id="fs_bc">
+                                    <option value="1">Pinned-Pinned (C1=9.87)</option>
+                                    <option value="2" selected>Fixed-Fixed (C1=22.37)</option>
+                                    <option value="3">Fixed-Pinned (C1=15.42)</option>
+                                    <option value="4">Single Span (C1=3.56)</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Soil Stiffness Ks</label><div class="input-group"><input type="number" class="input" id="fs_ks" value="10000"><span class="input-suffix">N/m²</span></div></div>
+                                <div class="form-group"><label class="form-label">Gap Ratio e/D</label><div class="input-group"><input type="number" class="input" id="fs_gap" value="0.5" step="0.1"><span class="input-suffix">-</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Flow Conditions</div></div>
+                        <div class="card-body">
                             <div class="form-row">
                                 <div class="form-group"><label class="form-label">Current Uc</label><div class="input-group"><input type="number" class="input" id="fs_uc" value="0.5" step="0.1"><span class="input-suffix">m/s</span></div></div>
                                 <div class="form-group"><label class="form-label">Wave Uw</label><div class="input-group"><input type="number" class="input" id="fs_uw" value="0.8" step="0.1"><span class="input-suffix">m/s</span></div></div>
                             </div>
-                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcFS()">Calculate VIV Screening</button>
+                            <div class="form-group">
+                                <label class="form-label">S-N Curve (Fatigue)</label>
+                                <select class="input" id="fs_sn">
+                                    <option value="1">D Curve (Air)</option>
+                                    <option value="2" selected>E Curve (Seawater + CP)</option>
+                                    <option value="3">F2 Curve (Seawater Free)</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label class="form-label">Design Life</label><div class="input-group"><input type="number" class="input" id="fs_life" value="20"><span class="input-suffix">years</span></div></div>
+                                <div class="form-group"><label class="form-label">Safety Factor</label><div class="input-group"><input type="number" class="input" id="fs_sf" value="10"><span class="input-suffix">-</span></div></div>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="calcFS()">Calculate VIV + Fatigue</button>
                         </div>
                     </div>
                     <div class="card">
-                        <div class="card-header"><div class="card-title">VIV Results</div></div>
+                        <div class="card-header"><div class="card-title">VIV Screening Results</div></div>
                         <div class="card-body">
-                            <div class="result-row"><span class="result-label">Natural Freq IL</span><span class="result-value text-mono" id="fs_fnil">-- Hz</span></div>
-                            <div class="result-row"><span class="result-label">Natural Freq CF</span><span class="result-value text-mono" id="fs_fncf">-- Hz</span></div>
+                            <div class="result-row"><span class="result-label">Mode 1 Natural Freq</span><span class="result-value text-mono" id="fs_fnil">-- Hz</span></div>
+                            <div class="result-row"><span class="result-label">Mode 2 Natural Freq</span><span class="result-value text-mono" id="fs_fn2">-- Hz</span></div>
+                            <div class="result-row"><span class="result-label">Mode 3 Natural Freq</span><span class="result-value text-mono" id="fs_fn3">-- Hz</span></div>
                             <div class="result-row"><span class="result-label">Required Freq IL</span><span class="result-value text-mono" id="fs_fnreqil">-- Hz</span></div>
                             <div class="result-row"><span class="result-label">Required Freq CF</span><span class="result-value text-mono" id="fs_fnreqcf">-- Hz</span></div>
                             <div class="result-row result-highlight"><span class="result-label">IL VIV Ratio</span><span><span class="result-value text-mono" id="fs_ilrat">--</span> <span class="status" id="fs_il_stat">--</span></span></div>
                             <div class="result-row result-highlight"><span class="result-label">CF VIV Ratio</span><span><span class="result-value text-mono" id="fs_cfrat">--</span> <span class="status" id="fs_cf_stat">--</span></span></div>
+                            <div class="result-row"><span class="result-label">Fatigue Damage (D)</span><span class="result-value text-mono" id="fs_dfat">--</span></div>
+                            <div class="result-row"><span class="result-label">Fatigue Life</span><span class="result-value text-mono" id="fs_fatlife">-- years</span></div>
                         </div>
                     </div>
+                </div>
+                <div class="grid-2 mt-4">
                     <div class="card">
                         <div class="card-header"><div class="card-title">Frequency Comparison</div></div>
                         <div class="card-body"><div id="fsChart" class="chart-container"></div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Allowable Span vs Current</div></div>
+                        <div class="card-body"><div id="fsSpanChart" class="chart-container"></div></div>
                     </div>
                 </div>
             </div>
@@ -1380,22 +1419,87 @@ function plotWTCharts(OD,P,Pext,CA,SMYS){
 }
 function calcWTSingle(OD,P,Pext,CA,SMYS){return Math.max(P*OD/(2*SMYS*0.72*0.9)+CA,OD*Math.pow(Pext/(0.8*24*SMYS),1/2.4)+CA);}
 
-// Free Span
+// Free Span - Enhanced DNV-RP-F105 with multi-mode and fatigue
 function calcFS(){
-    const Lil=+document.getElementById('fs_lil').value,Lcf=+document.getElementById('fs_lcf').value,De=+document.getElementById('fs_de').value/1000,WT=+document.getElementById('fs_wt').value/1000;
-    const Uc=+document.getElementById('fs_uc').value,Uw=+document.getElementById('fs_uw').value,E=208000e6,rhow=1025,Di=De-2*WT,Dtot=De+0.01;
-    const I=Math.PI/64*(De**4-Di**4),Mst=Math.PI/4*(De*De-Di*Di)*7850,Ma=Math.PI/4*Dtot*Dtot*rhow,Me=Ma+Mst,C1=3.56;
-    const fn_il=C1*Math.sqrt(E*I/(Me*Lil**4))/(2*Math.PI),fn_cf=C1*Math.sqrt(E*I/(Me*Lcf**4))/(2*Math.PI);
-    const U=Uc+Uw,fnreq_il=U/(5*Dtot),fnreq_cf=U/(3*Dtot),ilrat=fnreq_il/fn_il,cfrat=fnreq_cf/fn_cf;
+    const Lil=+document.getElementById('fs_lil').value,Lcf=+document.getElementById('fs_lcf').value;
+    const De=+document.getElementById('fs_de').value/1000,WT=+document.getElementById('fs_wt').value/1000;
+    const Uc=+document.getElementById('fs_uc').value,Uw=+document.getElementById('fs_uw').value;
+    const bc=+document.getElementById('fs_bc').value,Ks=+document.getElementById('fs_ks').value;
+    const gap=+document.getElementById('fs_gap').value,snCurve=+document.getElementById('fs_sn').value;
+    const designLife=+document.getElementById('fs_life').value,SF=+document.getElementById('fs_sf').value;
 
-    document.getElementById('fs_fnil').textContent=fn_il.toFixed(3)+' Hz';document.getElementById('fs_fncf').textContent=fn_cf.toFixed(3)+' Hz';
-    document.getElementById('fs_fnreqil').textContent=fnreq_il.toFixed(3)+' Hz';document.getElementById('fs_fnreqcf').textContent=fnreq_cf.toFixed(3)+' Hz';
-    document.getElementById('fs_ilrat').textContent=ilrat.toFixed(3);document.getElementById('fs_cfrat').textContent=cfrat.toFixed(3);
-    document.getElementById('fs_il_stat').textContent=ilrat<=1?'PASS':'FAIL';document.getElementById('fs_il_stat').className='status '+(ilrat<=1?'pass':'fail');
-    document.getElementById('fs_cf_stat').textContent=cfrat<=1?'PASS':'FAIL';document.getElementById('fs_cf_stat').className='status '+(cfrat<=1?'pass':'fail');
+    const E=207e9,rhow=1025,rhoSteel=7850,Di=De-2*WT,Dtot=De+0.05; // 50mm coating
+    const I=Math.PI/64*(De**4-Di**4),A=Math.PI/4*(De**2-Di**2);
+    const Mst=A*rhoSteel,Ma=Math.PI/4*Dtot*Dtot*rhow,Me=Ma+Mst;
 
-    const pass=ilrat<=1&&cfrat<=1;results.fs={ilrat,cfrat,pass};addHistory('Free Span','IL: '+ilrat.toFixed(2)+', CF: '+cfrat.toFixed(2),pass);updateKPI('fs','IL:'+ilrat.toFixed(2),pass);
-    Plotly.newPlot('fsChart',[{x:['IL Natural','IL Required','CF Natural','CF Required'],y:[fn_il,fnreq_il,fn_cf,fnreq_cf],type:'bar',marker:{color:['#3b82f6','#64748b','#10b981','#64748b']}}],{...plotLayout,yaxis:{...plotLayout.yaxis,title:'Frequency (Hz)'}},plotConfig);
+    // Boundary condition factors (C1 for mode 1, mode 2, mode 3)
+    const C1vals=[[9.87,39.48,88.83],[22.37,61.67,120.9],[15.42,49.96,104.25],[3.56,22.03,61.69]];
+    const C1=C1vals[bc-1][0],C2=C1vals[bc-1][1],C3=C1vals[bc-1][2];
+
+    // Multi-mode natural frequencies
+    const L=Math.max(Lil,Lcf);
+    const fn1=C1*Math.sqrt(E*I/(Me*L**4))/(2*Math.PI);
+    const fn2=C2*Math.sqrt(E*I/(Me*L**4))/(2*Math.PI);
+    const fn3=C3*Math.sqrt(E*I/(Me*L**4))/(2*Math.PI);
+
+    // Gap ratio effect on added mass
+    const Cm=gap<0.5?1+1.5/(1+5*gap):1.0;
+
+    // Required frequencies for VIV onset
+    const U=Uc+Uw;
+    const fnreq_il=U/(5*Dtot);  // IL onset at Vr=5
+    const fnreq_cf=U/(3*Dtot);  // CF onset at Vr=3
+
+    const ilrat=fnreq_il/fn1,cfrat=fnreq_cf/fn1;
+
+    // Fatigue calculation (simplified Miner's sum)
+    // S-N curve parameters [m, log(a)]
+    const snParams=[[3.0,12.164],[3.0,11.61],[3.0,11.146]][snCurve-1];
+    const m=snParams[0],loga=snParams[1];
+
+    // VIV amplitude (A/D) and stress range
+    const AD_il=ilrat>1?0.1*(ilrat-1):0;
+    const AD_cf=cfrat>1?0.3*(cfrat-1):0;
+    const AD=Math.max(AD_il,AD_cf);
+
+    // Bending stress from VIV amplitude
+    const kappa=4*AD*Dtot/(L*L);  // Approximate curvature
+    const sigmaVIV=E*kappa*De/2/1e6;  // MPa
+
+    // Number of cycles (assuming 10% of time VIV active)
+    const nCycles=0.1*fn1*designLife*365.25*24*3600;
+    const N=Math.pow(10,loga-m*Math.log10(sigmaVIV>0?sigmaVIV:1));
+    const Dfat=nCycles/(N*SF);
+    const fatLife=Dfat>0?designLife/Dfat:999;
+
+    // Update results
+    document.getElementById('fs_fnil').textContent=fn1.toFixed(3)+' Hz';
+    document.getElementById('fs_fn2').textContent=fn2.toFixed(3)+' Hz';
+    document.getElementById('fs_fn3').textContent=fn3.toFixed(3)+' Hz';
+    document.getElementById('fs_fnreqil').textContent=fnreq_il.toFixed(3)+' Hz';
+    document.getElementById('fs_fnreqcf').textContent=fnreq_cf.toFixed(3)+' Hz';
+    document.getElementById('fs_ilrat').textContent=ilrat.toFixed(3);
+    document.getElementById('fs_cfrat').textContent=cfrat.toFixed(3);
+    document.getElementById('fs_il_stat').textContent=ilrat<=1?'PASS':'FAIL';
+    document.getElementById('fs_il_stat').className='status '+(ilrat<=1?'pass':'fail');
+    document.getElementById('fs_cf_stat').textContent=cfrat<=1?'PASS':'FAIL';
+    document.getElementById('fs_cf_stat').className='status '+(cfrat<=1?'pass':'fail');
+    document.getElementById('fs_dfat').textContent=Dfat.toFixed(4);
+    document.getElementById('fs_fatlife').textContent=fatLife.toFixed(1)+' years';
+
+    const pass=ilrat<=1&&cfrat<=1&&Dfat<1;
+    results.fs={ilrat,cfrat,Dfat,pass};
+    addHistory('Free Span','IL:'+ilrat.toFixed(2)+' D:'+Dfat.toFixed(3),pass);
+    updateKPI('fs','IL:'+ilrat.toFixed(2),pass);
+
+    // Frequency comparison chart
+    Plotly.newPlot('fsChart',[{x:['Mode 1','Mode 2','Mode 3','IL Req','CF Req'],y:[fn1,fn2,fn3,fnreq_il,fnreq_cf],type:'bar',marker:{color:['#3b82f6','#10b981','#8b5cf6','#ef4444','#f59e0b']}}],{...plotLayout,yaxis:{...plotLayout.yaxis,title:'Frequency (Hz)'}},plotConfig);
+
+    // Allowable span chart
+    const spans=Array.from({length:20},(_,i)=>2+i*2);
+    const allowIL=spans.map(s=>C1*Math.sqrt(E*I/(Me*s**4))/(2*Math.PI)/(U/(5*Dtot)));
+    const allowCF=spans.map(s=>C1*Math.sqrt(E*I/(Me*s**4))/(2*Math.PI)/(U/(3*Dtot)));
+    Plotly.newPlot('fsSpanChart',[{x:spans,y:allowIL,name:'IL Ratio',type:'scatter',line:{color:'#3b82f6'}},{x:spans,y:allowCF,name:'CF Ratio',type:'scatter',line:{color:'#10b981'}}],{...plotLayout,shapes:[{type:'line',y0:1,y1:1,x0:2,x1:40,line:{color:'#ef4444',dash:'dash'}}],xaxis:{...plotLayout.xaxis,title:'Span (m)'},yaxis:{...plotLayout.yaxis,title:'VIV Ratio'}},plotConfig);
 }
 
 // CP Anode - DNV-RP-F103 compliant
