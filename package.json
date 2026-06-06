@@ -3,6 +3,28 @@
   "version": "1.0.0",
   "description": "Pipeline Engineering Calculator - Educational Tool",
   "scripts": {
-    "start": "npx serve ."
+    "start": "npx serve .",
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:report": "npx playwright show-report"
+  },
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Saesheindra/pipeline_engineering.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Saesheindra/pipeline_engineering/issues"
+  },
+  "homepage": "https://github.com/Saesheindra/pipeline_engineering#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "serve": "^14.2.6"
   }
 }
