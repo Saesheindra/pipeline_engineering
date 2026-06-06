@@ -5681,7 +5681,7 @@ function calcCost() {
     const pipeCost = pipeWeight / 1000 * pipePrice / 1e6; // M$
 
     // Coating cost
-    const coatPrice = {3lpe: 30, fbe: 25, concrete: 100, insulated: 200}; // $/m
+    const coatPrice = {'3lpe': 30, fbe: 25, concrete: 100, insulated: 200}; // $/m
     const coatCost = coatPrice[coat] * L * 1000 / 1e6;
 
     // Installation cost
